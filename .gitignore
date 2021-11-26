@@ -3,4 +3,8 @@
 *.swp
 *.egg-info
 dist
+log
+cfg.yaml
+client.env
+lavacli.yaml
 __pycache__
