@@ -1,0 +1,16 @@
+registered_frameworks:
+  - lava
+  - labgrid
+
+frameworks_config:
+  lava:
+    identities: dev
+  labgrid:
+    lg_crossbar: ws://$labgrid_crossbar_ip:20408/ws
+
+api_server:
+  port: 8600
+
+managed_resources:
+  - resource1
+  - resource2

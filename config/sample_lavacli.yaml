@@ -1,0 +1,4 @@
+$lava_identities:
+  token: $lava_token
+  uri: $lava_url
+  username: $lava_account
