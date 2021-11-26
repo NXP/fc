@@ -116,7 +116,9 @@ class Plugin(FCPlugin):
                     ):
                         driver.accept_resource(device["hostname"], self)
                         asyncio.create_task(
-                            self.__reset_possible_resource(driver, *(device["hostname"],))
+                            self.__reset_possible_resource(
+                                driver, *(device["hostname"],)
+                            )
                         )
 
                     # category devices by devicetypes as LAVA schedule based on devicetypes
