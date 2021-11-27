@@ -61,6 +61,11 @@ class Plugin(FCPlugin):
                     if not info["current_job"]:
                         driver.return_resource(info["hostname"])
                         freed_possible_resources.append(info["hostname"])
+
+                        # clean cache for returned device
+                        for job_id, devices in self.scheduler_cache.items():
+                            if info["hostname"] in devices:
+                                del self.scheduler_cache[job_id]
             except yaml.YAMLError:
                 logging.error(traceback.format_exc())
             await asyncio.sleep(60)
