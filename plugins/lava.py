@@ -63,8 +63,8 @@ class Plugin(FCPlugin):
                         freed_possible_resources.append(info["hostname"])
 
                         # clean cache for returned device
-                        for job_id, devices in self.scheduler_cache.items():
-                            if info["hostname"] in devices:
+                        for job_id in list(self.scheduler_cache.keys()):
+                            if info["hostname"] in self.scheduler_cache[job_id]:
                                 del self.scheduler_cache[job_id]
             except yaml.YAMLError:
                 logging.error(traceback.format_exc())
