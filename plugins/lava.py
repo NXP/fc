@@ -151,12 +151,6 @@ class Plugin(FCPlugin):
         try:
             queued_jobs = yaml.load(queued_jobs_text, Loader=yaml.FullLoader)
 
-            # clean cache to save memory
-            queued_jobs_ids = [queued_job["id"] for queued_job in queued_jobs]
-            for job_id in list(self.scheduler_cache.keys()):
-                if job_id not in queued_jobs_ids:
-                    del self.scheduler_cache[job_id]
-
             # get devices suitable for queued jobs
             for queued_job in queued_jobs:
                 candidated_devices = managed_resources_category.get(
