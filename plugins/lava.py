@@ -18,7 +18,7 @@ class Plugin(FCPlugin):
         self.schedule_interval = 30  # poll lava job queues every 30 seconds
         self.identities = frameworks_config["identities"]  # lavacli identities
 
-        self.queued_jobs_cache = {}  # cache to avoid busy scheduling
+        self.queued_jobs_scheduler_cache = {}  # cache to avoid busy scheduling
 
     async def __reset_possible_resource(self, driver, *possible_resources):
         """
@@ -148,9 +148,9 @@ class Plugin(FCPlugin):
 
             # clean cache to save memory
             queued_jobs_ids = [queued_job["id"] for queued_job in queued_jobs]
-            for job_id in list(self.queued_jobs_cache.keys()):
+            for job_id in list(self.queued_jobs_scheduler_cache.keys()):
                 if job_id not in queued_jobs_ids:
-                    del self.queued_jobs_cache[job_id]
+                    del self.queued_jobs_scheduler_cache[job_id]
 
             # get devices suitable for queued jobs
             for queued_job in queued_jobs:
@@ -159,15 +159,15 @@ class Plugin(FCPlugin):
                 )
                 job_id = queued_job["id"]
 
-                if job_id in self.queued_jobs_cache:
+                if job_id in self.queued_jobs_scheduler_cache:
                     for candidated_device in candidated_devices:
                         # if one device already be scheduled but not matched,
                         # don't schedule it again to avoid busy scheduling
-                        if candidated_device not in self.queued_jobs_cache[job_id]:
-                            self.queued_jobs_cache[job_id].append(candidated_device)
+                        if candidated_device not in self.queued_jobs_scheduler_cache[job_id]:
+                            self.queued_jobs_scheduler_cache[job_id].append(candidated_device)
                             possible_resources.append(candidated_device)
                 else:
-                    self.queued_jobs_cache[job_id] = candidated_devices
+                    self.queued_jobs_scheduler_cache[job_id] = candidated_devices
                     possible_resources += candidated_devices
             possible_resources = set(possible_resources)
         except yaml.YAMLError:
