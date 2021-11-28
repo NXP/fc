@@ -40,7 +40,7 @@ class Plugin(FCPlugin):
         freed_possible_resources = []
 
         # check if possible resource still be used by lava
-        while True:
+        while True:  # pylint: disable=too-many-nested-blocks
             cmd = f"lavacli -i {self.identities} devices list --yaml"
             _, devices_text, _ = await self._run_cmd(
                 f"lavacli -i {self.identities} devices list --yaml"
