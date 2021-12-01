@@ -17,6 +17,14 @@ class Plugin(FCPlugin):
         super().__init__()
         self.schedule_interval = 30  # poll lava job queues every 30 seconds
         self.identities = frameworks_config["identities"]  # lavacli identities
+        accurate_scheduler_criteria = frameworks_config.get(
+            "accurate_scheduler_criteria", None
+        )
+        self.accurate_scheduler_criteria__submitter = []
+        if accurate_scheduler_criteria:
+            self.accurate_scheduler_criteria__submitter = accurate_scheduler_criteria[
+                "submitter"
+            ]
 
         self.scheduler_cache = {}  # cache to avoid busy scheduling
 
@@ -156,18 +164,41 @@ class Plugin(FCPlugin):
                 candidated_devices = managed_resources_category.get(
                     queued_job["requested_device_type"], []
                 )
+                candidated_resources = candidated_devices
+
+                submitter = queued_job["submitter"]
                 job_id = queued_job["id"]
 
-                if job_id in self.scheduler_cache:
+                if (
+                    submitter in self.accurate_scheduler_criteria__submitter
+                    or "all" in self.accurate_scheduler_criteria__submitter
+                ):
+                    cmd = f"lavacli -i {self.identities} jobs show {job_id} --yaml"
+                    _, job_info_text, _ = await self._run_cmd(cmd)
+                    job_info = yaml.load(job_info_text, Loader=yaml.FullLoader)
+
+                    accurate_devices = []
                     for candidated_device in candidated_devices:
-                        # if one device already be scheduled but not matched,
+                        cmd = f"lavacli -i dev devices show {candidated_device} --yaml"
+                        _, device_info_text, _ = await self._run_cmd(cmd)
+                        device_info = yaml.load(
+                            device_info_text, Loader=yaml.FullLoader
+                        )
+                        if set(job_info["tags"]).issubset(device_info["tags"]):
+                            accurate_devices.append(candidated_device)
+
+                    candidated_resources = accurate_devices
+
+                if job_id in self.scheduler_cache:
+                    for candidated_resource in candidated_resources:
+                        # if one resource already be scheduled but not matched,
                         # don't schedule it again to avoid busy scheduling
-                        if candidated_device not in self.scheduler_cache[job_id]:
-                            self.scheduler_cache[job_id].append(candidated_device)
-                            possible_resources.append(candidated_device)
+                        if candidated_resource not in self.scheduler_cache[job_id]:
+                            self.scheduler_cache[job_id].append(candidated_resource)
+                            possible_resources.append(candidated_resource)
                 else:
-                    self.scheduler_cache[job_id] = candidated_devices
-                    possible_resources += candidated_devices
+                    self.scheduler_cache[job_id] = candidated_resources
+                    possible_resources += candidated_resources
             possible_resources = set(possible_resources)
         except yaml.YAMLError:
             logging.error(traceback.format_exc())

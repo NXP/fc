@@ -5,6 +5,8 @@ registered_frameworks:
 frameworks_config:
   lava:
     identities: dev
+    accurate_scheduler_criteria:
+      submitter: [all]
   labgrid:
     lg_crossbar: ws://$labgrid_crossbar_ip:20408/ws
 

@@ -9,6 +9,9 @@ COPY . .
 RUN chmod +x /fc/docker/entrypoint.sh
 RUN pip install -r requirements.txt
 
+# apply lavacli patch: https://git.lavasoftware.org/lava/lavacli/-/merge_requests/21
+RUN cp -rf /fc/docker/patches/jobs.py /usr/local/lib/python3.9/site-packages/lavacli/commands/
+
 ENV REQUESTS_CA_BUNDLE='/etc/ssl/certs/ca-certificates.crt'
 
 CMD ["/fc/docker/entrypoint.sh"]
