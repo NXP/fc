@@ -88,7 +88,7 @@ class Plugin(FCPlugin):
 
     async def schedule(
         self, driver
-    ):  # pylint: disable=too-many-locals, too-many-branches
+    ):  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         """
         Monitor LAVA job queue, once have pending jobs, online related devices
         to let LAVA take over these devices
