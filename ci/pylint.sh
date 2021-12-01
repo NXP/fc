@@ -2,4 +2,4 @@
 
 set -x
 
-find . -name "*.py" | xargs pylint
+find . -path ./docker -prune -o -name "*.py" -print | xargs pylint
