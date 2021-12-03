@@ -145,9 +145,6 @@ class Plugin(FCPlugin):
                                 device["hostname"]
                             ]
 
-                        if device["current_job"]:
-                            driver.accept_resource(device["hostname"], self)
-
             await asyncio.gather(*[self._run_cmd(cmd) for cmd in cmd_list])
         except yaml.YAMLError:
             logging.error(traceback.format_exc())
