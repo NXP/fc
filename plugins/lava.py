@@ -5,10 +5,10 @@ import logging
 import traceback
 import yaml
 
-from core.plugin import FCPlugin
+from core.plugin import AsyncRunMixin, FCPlugin
 
 
-class Plugin(FCPlugin):
+class Plugin(FCPlugin, AsyncRunMixin):
     """
     Plugin for [lava framework](https://git.lavasoftware.org/lava/lava)
     """
@@ -176,7 +176,10 @@ class Plugin(FCPlugin):
 
                     accurate_devices = []
                     for candidated_device in candidated_devices:
-                        cmd = f"lavacli -i {self.identities} devices show {candidated_device} --yaml"
+                        cmd = (
+                            f"lavacli -i {self.identities} devices show "
+                            f"{candidated_device} --yaml"
+                        )
                         _, device_info_text, _ = await self._run_cmd(cmd)
                         device_info = yaml.load(
                             device_info_text, Loader=yaml.FullLoader

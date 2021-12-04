@@ -6,10 +6,10 @@ import os
 import traceback
 import yaml
 
-from core.plugin import FCPlugin
+from core.plugin import AsyncRunMixin, FCPlugin
 
 
-class Plugin(FCPlugin):
+class Plugin(FCPlugin, AsyncRunMixin):
     """
     Plugin for [labgrid framework](https://github.com/labgrid-project/labgrid)
     """
