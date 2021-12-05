@@ -172,6 +172,12 @@ class Plugin(FCPlugin, AsyncRunMixin):
         try:
             queued_jobs = yaml.load(queued_jobs_text, Loader=yaml.FullLoader)
 
+            # clean cache to save memory
+            queued_jobs_ids = [queued_job["id"] for queued_job in queued_jobs]
+            for job_id in list(self.job_tags_cache.keys()):
+                if job_id not in queued_jobs_ids:
+                    del self.job_tags_cache[job_id]
+
             # get tags for queued jobs
             job_tags_list = await asyncio.gather(
                 *[
