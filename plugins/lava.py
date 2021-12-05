@@ -27,6 +27,7 @@ class Plugin(FCPlugin, AsyncRunMixin):
             ]
 
         self.scheduler_cache = {}  # cache to avoid busy scheduling
+        self.job_tags_cache = {}  # cache to store job tags
 
     async def __reset_possible_resource(self, driver, *possible_resources):
         """
@@ -85,6 +86,20 @@ class Plugin(FCPlugin, AsyncRunMixin):
 
         cmd = f"lavacli -i {self.identities} devices update --health MAINTENANCE {resource}"
         await self._run_cmd(cmd)
+
+    async def __get_job_tags(self, job_id):
+        cmd = f"lavacli -i {self.identities} jobs show {job_id} --yaml"
+        _, job_info_text, _ = await self._run_cmd(cmd)
+
+        job_info = yaml.load(job_info_text, Loader=yaml.FullLoader)
+        return job_id, job_info["tags"]
+
+    async def __get_device_tags(self, device):
+        cmd = f"lavacli -i {self.identities} devices show {device} --yaml"
+        _, device_info_text, _ = await self._run_cmd(cmd)
+
+        device_info = yaml.load(device_info_text, Loader=yaml.FullLoader)
+        return device, device_info["tags"]
 
     async def schedule(
         self, driver
@@ -153,52 +168,49 @@ class Plugin(FCPlugin, AsyncRunMixin):
         possible_resources = []
         cmd = f"lavacli -i {self.identities} jobs queue --limit=1000 --yaml"
         _, queued_jobs_text, _ = await self._run_cmd(cmd)
+
         try:
             queued_jobs = yaml.load(queued_jobs_text, Loader=yaml.FullLoader)
+
+            # get tags for queued jobs
+            job_tags_list = await asyncio.gather(
+                *[
+                    self.__get_job_tags(queued_job["id"])
+                    for queued_job in queued_jobs
+                    if queued_job["id"] not in self.job_tags_cache
+                ]
+            )
+            self.job_tags_cache.update(dict(job_tags_list))
 
             # get devices suitable for queued jobs
             for queued_job in queued_jobs:
                 candidated_devices = managed_resources_category.get(
                     queued_job["requested_device_type"], []
                 )
-                candidated_resources = candidated_devices
 
-                submitter = queued_job["submitter"]
                 job_id = queued_job["id"]
 
-                if (
-                    submitter in self.accurate_scheduler_criteria__submitter
-                    or "all" in self.accurate_scheduler_criteria__submitter
-                ):
-                    cmd = f"lavacli -i {self.identities} jobs show {job_id} --yaml"
-                    _, job_info_text, _ = await self._run_cmd(cmd)
-                    job_info = yaml.load(job_info_text, Loader=yaml.FullLoader)
+                candidated_resources = []
 
-                    accurate_devices = []
-                    for candidated_device in candidated_devices:
-                        cmd = (
-                            f"lavacli -i {self.identities} devices show "
-                            f"{candidated_device} --yaml"
-                        )
-                        _, device_info_text, _ = await self._run_cmd(cmd)
-                        device_info = yaml.load(
-                            device_info_text, Loader=yaml.FullLoader
-                        )
-                        if set(job_info["tags"]).issubset(device_info["tags"]):
-                            accurate_devices.append(candidated_device)
+                if job_id not in self.scheduler_cache:
+                    self.scheduler_cache[job_id] = []
 
-                    candidated_resources = accurate_devices
+                device_tags_list = await asyncio.gather(
+                    *[
+                        self.__get_device_tags(candidated_device)
+                        for candidated_device in candidated_devices
+                        if candidated_device not in self.scheduler_cache[job_id]
+                    ]
+                )
+                device_tags_dict = dict(device_tags_list)
 
-                if job_id in self.scheduler_cache:
-                    for candidated_resource in candidated_resources:
-                        # if one resource already be scheduled but not matched,
-                        # don't schedule it again to avoid busy scheduling
-                        if candidated_resource not in self.scheduler_cache[job_id]:
-                            self.scheduler_cache[job_id].append(candidated_resource)
-                            possible_resources.append(candidated_resource)
-                else:
-                    self.scheduler_cache[job_id] = candidated_resources
-                    possible_resources += candidated_resources
+                for device, tags in device_tags_dict.items():
+                    if set(self.job_tags_cache[job_id]).issubset(tags):
+                        candidated_resources.append(device)
+
+                self.scheduler_cache[job_id] += list(device_tags_dict.keys())
+                possible_resources += candidated_resources
+
             possible_resources = set(possible_resources)
         except yaml.YAMLError:
             logging.error(traceback.format_exc())
