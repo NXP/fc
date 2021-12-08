@@ -138,7 +138,7 @@ class Plugin(FCPlugin, AsyncRunMixin):
                         )
                         cmd_list.append(cmd)
 
-                    # guard behavior: in case there are some unpexcted manual online & jobs there
+                    # guard behavior: in case there are some unexpected manual online & jobs there
                     if device["current_job"] and driver.is_resource_available(
                         device["hostname"]
                     ):
