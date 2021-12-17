@@ -52,9 +52,7 @@ class Plugin(FCPlugin, AsyncRunMixin):
         # check if possible resource still be used by lava
         while True:  # pylint: disable=too-many-nested-blocks
             cmd = f"lavacli -i {self.identities} devices list --yaml"
-            _, devices_text, _ = await self._run_cmd(
-                f"lavacli -i {self.identities} devices list --yaml"
-            )
+            _, devices_text, _ = await self._run_cmd(cmd)
             try:
                 devices = yaml.load(devices_text, Loader=yaml.FullLoader)
                 used_possible_resources = [
