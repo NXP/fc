@@ -37,3 +37,6 @@ class FCPlugin:
 
     async def schedule(self, driver):
         raise NotImplementedError(f"Define in the subclass: {self}")
+
+    async def force_kick_off(self, resource):
+        raise NotImplementedError(f"Define in the subclass: {self}")

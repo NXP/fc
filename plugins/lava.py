@@ -27,6 +27,7 @@ class Plugin(FCPlugin, AsyncRunMixin):
             ]
 
         self.scheduler_cache = {}  # cache to avoid busy scheduling
+        self.seize_cache = {}  # cache to avoid busy seize
         self.job_tags_cache = {}  # cache to store job tags
 
     async def __reset_possible_resource(self, driver, *possible_resources):
@@ -75,6 +76,9 @@ class Plugin(FCPlugin, AsyncRunMixin):
                         for job_id in list(self.scheduler_cache.keys()):
                             if info["hostname"] in self.scheduler_cache[job_id]:
                                 del self.scheduler_cache[job_id]
+                        for job_id in list(self.seize_cache.keys()):
+                            if info["hostname"] in self.seize_cache[job_id]:
+                                del self.seize_cache[job_id]
             except yaml.YAMLError:
                 logging.error(traceback.format_exc())
             await asyncio.sleep(60)
@@ -101,6 +105,35 @@ class Plugin(FCPlugin, AsyncRunMixin):
         device_info = yaml.load(device_info_text, Loader=yaml.FullLoader)
         return device, device_info["tags"]
 
+    async def force_kick_off(self, resource):
+        # FIXME: haven't realized the method to kick off lava job  # pylint: disable=fixme
+        pass
+
+    async def seize_resource(self, driver, job_id, candidated_non_available_devices):
+        """
+        Request coordinator to seize low priority resource
+        """
+
+        non_available_device_tags_list = await asyncio.gather(
+            *[
+                self.__get_device_tags(candidated_non_available_device)
+                for candidated_non_available_device in candidated_non_available_devices
+            ]
+        )
+        non_available_device_tags_dict = dict(non_available_device_tags_list)
+
+        candidated_non_available_resources = []
+        for device, tags in non_available_device_tags_dict.items():
+            if set(self.job_tags_cache[job_id]).issubset(tags):
+                candidated_non_available_resources.append(device)
+            else:
+                self.seize_cache[job_id] += [device]
+
+        priority_resources = await driver.coordinate_resources(
+            self, job_id, *candidated_non_available_resources
+        )
+        self.seize_cache[job_id] += priority_resources
+
     async def schedule(
         self, driver
     ):  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
@@ -114,7 +147,7 @@ class Plugin(FCPlugin, AsyncRunMixin):
         _, devices_text, _ = await self._run_cmd(cmd)
 
         try:
-            managed_resources_category = {}
+            managed_resources_category = {"available": {}, "non-available": {}}
             devices = yaml.load(devices_text, Loader=yaml.FullLoader)
 
             cmd_list = []
@@ -130,7 +163,7 @@ class Plugin(FCPlugin, AsyncRunMixin):
                             "Good",
                             "Bad",
                         )
-                        and driver.is_resource_available(device["hostname"])
+                        and driver.is_resource_available(self, device["hostname"])
                     ):
                         cmd = (
                             f"lavacli -i {self.identities} "
@@ -140,7 +173,7 @@ class Plugin(FCPlugin, AsyncRunMixin):
 
                     # guard behavior: in case there are some unexpected manual online & jobs there
                     if device["current_job"] and driver.is_resource_available(
-                        device["hostname"]
+                        self, device["hostname"]
                     ):
                         driver.accept_resource(device["hostname"], self)
                         asyncio.create_task(
@@ -150,15 +183,19 @@ class Plugin(FCPlugin, AsyncRunMixin):
                         )
 
                     # category devices by devicetypes as LAVA schedule based on devicetypes
-                    if driver.is_resource_available(device["hostname"]):
-                        if device["type"] in managed_resources_category:
-                            managed_resources_category[device["type"]].append(
-                                device["hostname"]
-                            )
-                        else:
-                            managed_resources_category[device["type"]] = [
-                                device["hostname"]
-                            ]
+                    if driver.is_resource_available(self, device["hostname"]):
+                        category_key = "available"
+                    elif driver.is_resource_non_available(device["hostname"]):
+                        category_key = "non-available"
+
+                    if device["type"] in managed_resources_category[category_key]:
+                        managed_resources_category[category_key][device["type"]].append(
+                            device["hostname"]
+                        )
+                    else:
+                        managed_resources_category[category_key][device["type"]] = [
+                            device["hostname"]
+                        ]
 
             await asyncio.gather(*[self._run_cmd(cmd) for cmd in cmd_list])
         except yaml.YAMLError:
@@ -189,38 +226,67 @@ class Plugin(FCPlugin, AsyncRunMixin):
             self.job_tags_cache.update(dict(job_tags_list))
 
             # get devices suitable for queued jobs
+            queued_jobs.reverse()
             for queued_job in queued_jobs:
-                candidated_devices = managed_resources_category.get(
-                    queued_job["requested_device_type"], []
-                )
+                candidated_available_devices = managed_resources_category[
+                    "available"
+                ].get(queued_job["requested_device_type"], [])
 
                 job_id = queued_job["id"]
 
-                candidated_resources = []
+                candidated_available_resources = []
 
                 if job_id not in self.scheduler_cache:
                     self.scheduler_cache[job_id] = []
 
-                device_tags_list = await asyncio.gather(
+                available_device_tags_list = await asyncio.gather(
                     *[
-                        self.__get_device_tags(candidated_device)
-                        for candidated_device in candidated_devices
-                        if candidated_device not in self.scheduler_cache[job_id]
+                        self.__get_device_tags(candidated_available_device)
+                        for candidated_available_device in candidated_available_devices
+                        if candidated_available_device
+                        not in self.scheduler_cache[job_id]
                     ]
                 )
-                device_tags_dict = dict(device_tags_list)
+                available_device_tags_dict = dict(available_device_tags_list)
 
-                for device, tags in device_tags_dict.items():
+                for device, tags in available_device_tags_dict.items():
                     if set(self.job_tags_cache[job_id]).issubset(tags):
-                        candidated_resources.append(device)
+                        candidated_available_resources.append(device)
 
-                self.scheduler_cache[job_id] += list(device_tags_dict.keys())
-                possible_resources += candidated_resources
+                        if driver.is_seized_resource(self, device):
+                            driver.clear_seized_job_cache(device)
+
+                self.scheduler_cache[job_id] += list(available_device_tags_dict.keys())
+                possible_resources += candidated_available_resources
+
+                # no available resource found, try to seize from other framework
+                if job_id not in self.seize_cache:
+                    self.seize_cache[job_id] = []
+
+                candidated_non_available_devices = [
+                    non_available_device
+                    for non_available_device in managed_resources_category[
+                        "non-available"
+                    ].get(queued_job["requested_device_type"], [])
+                    if non_available_device not in self.seize_cache[job_id]
+                ]
+                if (
+                    driver.priority_scheduler
+                    and not candidated_available_resources
+                    and not driver.is_seized_job(job_id)
+                    and candidated_non_available_devices
+                ):
+                    asyncio.create_task(
+                        self.seize_resource(
+                            driver, job_id, candidated_non_available_devices
+                        )
+                    )
 
             possible_resources = set(possible_resources)
         except yaml.YAMLError:
             logging.error(traceback.format_exc())
 
+        # let lava dispatch
         if possible_resources:
             logging.info("Online devices to schedule lava jobs.")
             for possible_resource in possible_resources:

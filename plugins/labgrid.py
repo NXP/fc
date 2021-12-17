@@ -72,6 +72,32 @@ class Plugin(FCPlugin, AsyncRunMixin):
         cmd = f"labgrid-client -p {resource} acquire"
         await self._run_cmd(cmd)
 
+    async def force_kick_off(self, resource):
+        """
+        Allow coordinator to seize labgrid resource
+        """
+
+        cmd = f"labgrid-client -p {resource} show"
+        _, place_info_text, _ = await self._run_cmd(cmd)
+        place_info_text = place_info_text.decode()
+
+        token = ""
+        place_info_lines = place_info_text.splitlines()
+        for line in place_info_lines:
+            if line.find("reservation") >= 0:
+                token = line.split(":")[-1].strip()
+                break
+
+        if token:
+            cmd = "labgrid-client reservations"
+            _, reservations_text, _ = await self._run_cmd(cmd)
+            reservations = yaml.load(reservations_text, Loader=yaml.FullLoader)
+            for reservation in reservations.keys():
+                if reservation == f"Reservation '{token}'":
+                    await self._run_cmd(f"labgrid-client cancel-reservation {token}")
+                    await self._run_cmd(f"labgrid-client -p {resource} unlock -k")
+                    break
+
     async def schedule(self, driver):
         """
         Monitor Labgrid reserve queue, once have pending reservation,
@@ -110,7 +136,7 @@ class Plugin(FCPlugin, AsyncRunMixin):
                 for _, v in reservations.items():  # pylint: disable=invalid-name
                     resource = v["filters"]["main"][5:]
                     if v["owner"] != "fc/fc" and v["state"] == "waiting":
-                        if driver.is_resource_available(resource):
+                        if driver.is_resource_available(self, resource):
                             # if has pending reservation not belongs to normal user
                             # meanwhile device currently belongs to fc, accept it
                             driver.accept_resource(resource, self)

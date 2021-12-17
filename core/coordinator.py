@@ -20,10 +20,19 @@ class Coordinator:
             )
             for framework in Config.registered_frameworks
         ]
+
+        self.__framework_priorities = {
+            framework: Config.frameworks_config[framework]["priority"]
+            for framework in Config.registered_frameworks
+        }
+
         self.__managed_resources_status = {}
 
         for resource in Config.managed_resources:
             self.__managed_resources_status[resource] = "fc"
+
+        # assure no seize for this job when already a seize for this job there
+        self.coordinating_job_records = {}
 
         logging.info("FC managed resource list:")
         logging.info(Config.managed_resources)
@@ -57,6 +66,10 @@ class Coordinator:
         await self.__schedule_frameworks()
 
     @property
+    def priority_scheduler(self):
+        return Config.priority_scheduler
+
+    @property
     def managed_resources(self):
         return Config.managed_resources
 
@@ -68,15 +81,107 @@ class Coordinator:
     def framework_instances(self):
         return self.__framework_plugins
 
-    def is_resource_available(self, resource):
-        return self.__managed_resources_status.get(resource, "") == "fc"
+    def __get_low_priority_frameworks(self, cur_framework):
+        """
+        Get all frameworks with low priority compared to current framework
+        """
+
+        return [
+            framework
+            for framework in self.__framework_priorities.keys()
+            if self.__framework_priorities[framework]
+            < self.__framework_priorities[cur_framework]
+        ]
+
+    def is_resource_available(self, context, resource):
+        return self.__managed_resources_status.get(resource, "") in (
+            "fc",
+            context.__module__.split(".")[-1] + "_seized",
+        )
+
+    def is_resource_non_available(self, resource):
+        return (
+            self.__managed_resources_status.get(resource, "")
+            in Config.registered_frameworks
+        )
+
+    def is_seized_resource(self, context, resource):
+        if not self.priority_scheduler:
+            return False
+
+        return (
+            self.__managed_resources_status.get(resource, "")
+            == context.__module__.split(".")[-1] + "_seized"
+        )
+
+    def clear_seized_job_cache(self, device):
+        for job_id in list(self.coordinating_job_records.keys()):
+            if device == self.coordinating_job_records[job_id]:
+                self.coordinating_job_records.pop(job_id)
+
+    def is_seized_job(self, job_id):
+        return job_id in list(self.coordinating_job_records.keys())
+
+    async def coordinate_resources(self, context, job_id, *candidated_resources):
+        """
+        Seize resource from low priority framework
+        """
+
+        if not self.priority_scheduler:
+            logging.info("Resource coordinate reject.")
+            return []
+
+        logging.info("Require from %s", context.__module__.split(".")[-1])
+
+        candidated_seized_resources = [
+            candidated_resource
+            for candidated_resource in candidated_resources
+            if self.managed_resources_status[candidated_resource]
+            in self.__get_low_priority_frameworks(context.__module__.split(".")[-1])
+        ]
+
+        high_priority_resources = list(
+            set(candidated_resources).difference(set(candidated_seized_resources))
+        )
+        low_priority_resources = []
+
+        if candidated_seized_resources:
+            candidated_seized_resource = candidated_seized_resources[0]
+            self.coordinating_job_records[job_id] = candidated_seized_resource
+
+            # kick off resource
+            for framework in self.__framework_plugins:
+                if (
+                    framework.__module__.split(".")[-1]
+                    == self.managed_resources_status[candidated_seized_resource]
+                ):
+                    self.__set_resource_status(
+                        candidated_seized_resource,
+                        context.__module__.split(".")[-1] + "_seizing",
+                    )
+                    logging.info(
+                        "Force kick off the resource %s.", candidated_seized_resource
+                    )
+                    await framework.force_kick_off(candidated_seized_resource)
+                    self.__set_resource_status(
+                        candidated_seized_resource,
+                        context.__module__.split(".")[-1] + "_seized",
+                    )
+                    break
+            low_priority_resources.append(candidated_seized_resource)
+
+        return high_priority_resources + low_priority_resources
 
     def __set_resource_status(self, resource, status):
         self.__managed_resources_status[resource] = status
         logging.info("* %s now belongs to %s", resource, status)
 
     def return_resource(self, resource):
-        self.__set_resource_status(resource, "fc")
+        if (
+            self.__managed_resources_status.get(resource, "")
+            in Config.registered_frameworks
+        ):
+            self.__set_resource_status(resource, "fc")
 
     def accept_resource(self, resource, context):
         self.__set_resource_status(resource, context.__module__.split(".")[-1])
