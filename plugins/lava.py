@@ -5,6 +5,7 @@ import logging
 import traceback
 import yaml
 
+from core.decorators import lava_safe_cache
 from core.plugin import AsyncRunMixin, FCPlugin
 
 
@@ -29,6 +30,10 @@ class Plugin(FCPlugin, AsyncRunMixin):
         self.scheduler_cache = {}  # cache to avoid busy scheduling
         self.seize_cache = {}  # cache to avoid busy seize
         self.job_tags_cache = {}  # cache to store job tags
+
+    @lava_safe_cache
+    def __update_cache(self, cache_name, job_id, value):
+        self.__dict__[cache_name][job_id] += value
 
     async def __reset_possible_resource(self, driver, *possible_resources):
         """
@@ -125,18 +130,12 @@ class Plugin(FCPlugin, AsyncRunMixin):
             if set(self.job_tags_cache[job_id]).issubset(tags):
                 candidated_non_available_resources.append(device)
             else:
-                # verify job id still in cache
-                if job_id not in self.seize_cache:
-                    self.seize_cache[job_id] = []
-                self.seize_cache[job_id] += [device]
+                self.__update_cache("seize_cache", job_id, [device])
 
         priority_resources = await driver.coordinate_resources(
             self, job_id, *candidated_non_available_resources
         )
-        # verify job id still in cache
-        if job_id not in self.seize_cache:
-            self.seize_cache[job_id] = []
-        self.seize_cache[job_id] += priority_resources
+        self.__update_cache("seize_cache", job_id, priority_resources)
 
     async def schedule(
         self, driver
@@ -260,10 +259,9 @@ class Plugin(FCPlugin, AsyncRunMixin):
                         if driver.is_seized_resource(self, device):
                             driver.clear_seized_job_cache(device)
 
-                # verify job id still in cache
-                if job_id not in self.scheduler_cache:
-                    self.scheduler_cache[job_id] = []
-                self.scheduler_cache[job_id] += list(available_device_tags_dict.keys())
+                self.__update_cache(
+                    "scheduler_cache", job_id, list(available_device_tags_dict.keys())
+                )
                 possible_resources += candidated_available_resources
 
                 # no available resource found, try to seize from other framework
