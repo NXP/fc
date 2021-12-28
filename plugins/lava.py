@@ -5,7 +5,7 @@ import logging
 import traceback
 import yaml
 
-from core.decorators import lava_safe_cache
+from core.decorators import safe_cache
 from core.plugin import AsyncRunMixin, FCPlugin
 
 
@@ -31,7 +31,7 @@ class Plugin(FCPlugin, AsyncRunMixin):
         self.seize_cache = {}  # cache to avoid busy seize
         self.job_tags_cache = {}  # cache to store job tags
 
-    @lava_safe_cache
+    @safe_cache
     def __update_cache(self, cache_name, job_id, value):
         self.__dict__[cache_name][job_id] += value
 
