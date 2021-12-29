@@ -4,8 +4,9 @@ import asyncio
 import logging
 
 from importlib import import_module
-from core.config import Config
 from core.api_svr import ApiSvr
+from core.config import Config
+from core.decorators import check_priority_scheduler
 
 
 class Coordinator:
@@ -105,10 +106,8 @@ class Coordinator:
             in Config.registered_frameworks
         )
 
+    @check_priority_scheduler()
     def is_seized_resource(self, context, resource):
-        if not self.priority_scheduler:
-            return False
-
         return (
             self.__managed_resources_status.get(resource, "")
             == context.__module__.split(".")[-1] + "_seized"
@@ -122,14 +121,11 @@ class Coordinator:
     def is_seized_job(self, job_id):
         return job_id in list(self.coordinating_job_records.keys())
 
+    @check_priority_scheduler()
     async def coordinate_resources(self, context, job_id, *candidated_resources):
         """
         Seize resource from low priority framework
         """
-
-        if not self.priority_scheduler:
-            logging.info("Resource coordinate reject.")
-            return []
 
         logging.info("Require from %s", context.__module__.split(".")[-1])
 

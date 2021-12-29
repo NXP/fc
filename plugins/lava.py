@@ -5,7 +5,7 @@ import logging
 import traceback
 import yaml
 
-from core.decorators import safe_cache
+from core.decorators import check_priority_scheduler, safe_cache
 from core.plugin import AsyncRunMixin, FCPlugin
 
 
@@ -112,7 +112,7 @@ class Plugin(FCPlugin, AsyncRunMixin):
         # FIXME: haven't realized the method to kick off lava job  # pylint: disable=fixme
         pass
 
-    async def seize_resource(self, driver, job_id, candidated_non_available_devices):
+    async def __seize_resource(self, driver, job_id, candidated_non_available_devices):
         """
         Request coordinator to seize low priority resource
         """
@@ -135,7 +135,8 @@ class Plugin(FCPlugin, AsyncRunMixin):
         priority_resources = await driver.coordinate_resources(
             self, job_id, *candidated_non_available_resources
         )
-        self.__update_cache("seize_cache", job_id, priority_resources)
+        if priority_resources:
+            self.__update_cache("seize_cache", job_id, priority_resources)
 
     async def schedule(
         self, driver
@@ -264,28 +265,30 @@ class Plugin(FCPlugin, AsyncRunMixin):
                 )
                 possible_resources += candidated_available_resources
 
-                # no available resource found, try to seize from other framework
-                if job_id not in self.seize_cache:
-                    self.seize_cache[job_id] = []
-
-                candidated_non_available_devices = [
-                    non_available_device
-                    for non_available_device in managed_resources_category[
-                        "non-available"
-                    ].get(queued_job["requested_device_type"], [])
-                    if non_available_device not in self.seize_cache[job_id]
-                ]
-                if (
-                    driver.priority_scheduler
-                    and not candidated_available_resources
-                    and not driver.is_seized_job(job_id)
-                    and candidated_non_available_devices
-                ):
-                    asyncio.create_task(
-                        self.seize_resource(
-                            driver, job_id, candidated_non_available_devices
+                # pylint: disable=cell-var-from-loop
+                @check_priority_scheduler(driver)
+                @safe_cache
+                def lava_seize_resource(*_):
+                    candidated_non_available_devices = [
+                        non_available_device
+                        for non_available_device in managed_resources_category[
+                            "non-available"
+                        ].get(queued_job["requested_device_type"], [])
+                        if non_available_device not in self.seize_cache[job_id]
+                    ]
+                    if (
+                        not candidated_available_resources
+                        and not driver.is_seized_job(job_id)
+                        and candidated_non_available_devices
+                    ):
+                        asyncio.create_task(
+                            self.__seize_resource(
+                                driver, job_id, candidated_non_available_devices
+                            )
                         )
-                    )
+
+                # no available resource found, try to seize from other framework
+                lava_seize_resource(self, "seize_cache", job_id)
 
             possible_resources = set(possible_resources)
         except yaml.YAMLError:
