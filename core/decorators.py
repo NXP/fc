@@ -18,12 +18,8 @@ def check_priority_scheduler(*decorator_args):
 
             @wraps(func)
             async def async_decorator(*args):
-                driver = (
-                    args[0].priority_scheduler
-                    if len(decorator_args) == 0
-                    else decorator_args[0]
-                )
-                if not driver:
+                driver = args[0] if len(decorator_args) == 0 else decorator_args[0]
+                if not driver.priority_scheduler:
                     return False
                 return await func(*args)
 
@@ -31,12 +27,8 @@ def check_priority_scheduler(*decorator_args):
 
         @wraps(func)
         def decorator(*args):
-            driver = (
-                args[0].priority_scheduler
-                if len(decorator_args) == 0
-                else decorator_args[0]
-            )
-            if not driver:
+            driver = args[0] if len(decorator_args) == 0 else decorator_args[0]
+            if not driver.priority_scheduler:
                 return False
             return func(*args)
 
