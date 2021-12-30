@@ -109,8 +109,19 @@ class Plugin(FCPlugin, AsyncRunMixin):
         return device, device_info["tags"]
 
     async def force_kick_off(self, resource):
-        # FIXME: haven't realized the method to kick off lava job  # pylint: disable=fixme
-        pass
+        """
+        Allow coordinator to seize lava resource
+        """
+
+        cmd = f"lavacli -i {self.identities} devices show {resource} --yaml"
+        _, device_info_text, _ = await self._run_cmd(cmd)
+
+        device_info = yaml.load(device_info_text, Loader=yaml.FullLoader)
+        current_job = device_info["current_job"]
+
+        if current_job:
+            cmd = f"lavacli -i {self.identities} jobs cancel {current_job}"
+            await self._run_cmd(cmd)
 
     async def __seize_resource(self, driver, job_id, candidated_non_available_devices):
         """
