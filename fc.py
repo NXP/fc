@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+from about import __version__
 from core.coordinator import Coordinator
 
 
@@ -15,6 +16,7 @@ ______                                           _    _____                     
 \_| |_|  \__,_|_| |_| |_|\___| \_/\_/ \___/|_|  |_|\_\\____/\___/ \___/|_|  \__,_|_|_| |_|\__,_|\__\___/|_|   
     """
     logging.info(product_text)
+    logging.info("VERSION: %s", __version__)
 
     Coordinator().start()
 
