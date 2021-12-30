@@ -28,7 +28,7 @@ class Coordinator:
         }
 
         self.__framework_seize_strategies = {
-            framework: Config.frameworks_config[framework]["seize"]
+            framework: Config.frameworks_config[framework].get("seize", True)
             for framework in Config.registered_frameworks
         }
 
