@@ -269,7 +269,7 @@ class Plugin(FCPlugin, AsyncRunMixin):
                         candidated_available_resources.append(device)
 
                         if driver.is_seized_resource(self, device):
-                            driver.clear_seized_job_cache(device)
+                            driver.clear_seized_job_records(device)
 
                 self.__update_cache(
                     "scheduler_cache", job_id, list(available_device_tags_dict.keys())

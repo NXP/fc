@@ -113,7 +113,7 @@ class Coordinator:
             == context.__module__.split(".")[-1] + "_seized"
         )
 
-    def clear_seized_job_cache(self, device):
+    def clear_seized_job_records(self, device):
         for job_id in list(self.coordinating_job_records.keys()):
             if device == self.coordinating_job_records[job_id]:
                 self.coordinating_job_records.pop(job_id)
