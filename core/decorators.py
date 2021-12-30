@@ -35,3 +35,18 @@ def check_priority_scheduler(*decorator_args):
         return decorator
 
     return wrapper
+
+
+def check_seize_strategy(*decorator_args):
+    def wrapper(func):
+        @wraps(func)
+        def decorator(*args):
+            driver = decorator_args[0]
+            context = decorator_args[1]
+            if not driver.framework_seize_strategies[context.__module__.split(".")[-1]]:
+                return False
+            return func(*args)
+
+        return decorator
+
+    return wrapper

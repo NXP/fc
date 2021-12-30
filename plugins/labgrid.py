@@ -5,7 +5,7 @@ import logging
 import os
 import traceback
 import yaml
-from core.decorators import check_priority_scheduler, safe_cache
+from core.decorators import check_priority_scheduler, check_seize_strategy, safe_cache
 
 from core.plugin import AsyncRunMixin, FCPlugin
 
@@ -167,6 +167,7 @@ class Plugin(FCPlugin, AsyncRunMixin):
 
                             # pylint: disable=cell-var-from-loop
                             @check_priority_scheduler(driver)
+                            @check_seize_strategy(driver, self)
                             @safe_cache
                             def labgrid_seize_resource(*_):
                                 candidated_resources = (

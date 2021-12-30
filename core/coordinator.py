@@ -27,6 +27,11 @@ class Coordinator:
             for framework in Config.registered_frameworks
         }
 
+        self.__framework_seize_strategies = {
+            framework: Config.frameworks_config[framework]["seize"]
+            for framework in Config.registered_frameworks
+        }
+
         self.__managed_resources_status = {}
 
         for resource in Config.managed_resources:
@@ -81,6 +86,10 @@ class Coordinator:
     @property
     def framework_instances(self):
         return self.__framework_plugins
+
+    @property
+    def framework_seize_strategies(self):
+        return self.__framework_seize_strategies
 
     def __get_low_priority_frameworks(self, cur_framework):
         """
