@@ -292,13 +292,13 @@ class Plugin(FCPlugin, AsyncRunMixin):
                         and not driver.is_seized_job(job_id)
                         and candidated_non_available_devices
                     ):
+                        # no available resource found, try to seize from other framework
                         asyncio.create_task(
                             self.__seize_resource(
                                 driver, job_id, candidated_non_available_devices
                             )
                         )
 
-                # no available resource found, try to seize from other framework
                 lava_seize_resource(self, "seize_cache", job_id)
 
             possible_resources = set(possible_resources)
