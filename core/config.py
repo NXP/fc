@@ -16,5 +16,5 @@ class Config:
         Config.managed_resources = cfg["managed_resources"]
         Config.registered_frameworks = cfg["registered_frameworks"]
         Config.frameworks_config = cfg["frameworks_config"]
-        Config.priority_scheduler = cfg["priority_scheduler"]
+        Config.priority_scheduler = cfg.get("priority_scheduler", False)
         Config.api_server = cfg["api_server"]
