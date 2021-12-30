@@ -11,6 +11,7 @@ frameworks_config:
   labgrid:
     lg_crossbar: ws://$labgrid_crossbar_ip:20408/ws
     priority: 1
+    seize: false
 
 priority_scheduler: true
 
