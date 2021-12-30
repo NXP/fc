@@ -136,7 +136,9 @@ class Coordinator:
         Seize resource from low priority framework
         """
 
-        logging.info("Require from %s", context.__module__.split(".")[-1])
+        logging.info(
+            "Seize resource requirement from %s", context.__module__.split(".")[-1]
+        )
 
         candidated_seized_resources = [
             candidated_resource
