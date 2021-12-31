@@ -44,8 +44,13 @@ class ApiSvr:
 
         return web.json_response(response)
 
+    @staticmethod
+    async def pong(_):
+        return web.Response(text="pong")
+
     async def start(self, port):
         app = web.Application()
+        app.add_routes([web.get("/ping", self.pong)])
         app.add_routes([web.get("/{res}", self.resource_status)])
 
         app_runner = web.AppRunner(app)
