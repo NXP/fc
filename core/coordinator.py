@@ -128,6 +128,7 @@ class Coordinator:
                 self.coordinating_job_records.pop(job_id)
 
     def is_seized_job(self, job_id):
+        # pylint: disable=consider-iterating-dictionary
         return job_id in list(self.coordinating_job_records.keys())
 
     @check_priority_scheduler()
