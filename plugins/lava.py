@@ -41,8 +41,8 @@ class Plugin(FCPlugin, AsyncRunMixin):
         Meanwhile, return resouces which participate LAVA scheduling to FC if device idle.
         """
 
-        # let lava scheduler schedule 60 seconds, then do corresponding cleanup
-        await asyncio.sleep(60)
+        # let lava scheduler schedule 90 seconds, then do corresponding cleanup
+        await asyncio.sleep(90)
 
         for resource in possible_resources:
             logging.info("Maintenance: %s", resource)
