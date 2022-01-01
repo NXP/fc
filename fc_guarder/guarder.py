@@ -14,6 +14,7 @@ sys.path.append(management_path)
 
 # pylint: disable=wrong-import-position
 from cmd_online_lava_devices import LavaManagement
+from about import __version__
 
 
 class Guarder:
@@ -38,6 +39,7 @@ class Guarder:
 
 def main():
     print("FC guarder start.")
+    print(f"VERSION: {__version__}")
 
     default_interval = int(os.environ.get("FC_GUARDER_DEFAULT_INTERVAL", "600"))
     min_interval = int(os.environ.get("FC_GUARDER_MIN_INTERVAL", "60"))
