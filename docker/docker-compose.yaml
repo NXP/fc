@@ -3,14 +3,13 @@ version: "3"
 services:
   fc:
     build:
-      context: .
-      dockerfile: docker/Dockerfile
+      context: ..
     image: fc
     container_name: fc
     ports:
       - "8600:8600"
     volumes:
-      - $PWD/config/lavacli.yaml:/root/.config/lavacli.yaml
-      - $PWD/config/cfg.yaml:/fc/config/cfg.yaml
+      - $PWD/../config/lavacli.yaml:/root/.config/lavacli.yaml
+      - $PWD/../config/cfg.yaml:/fc/config/cfg.yaml
       - /etc/localtime:/etc/localtime
       - /usr/local/share/ca-certificates:/usr/local/share/ca-certificates
