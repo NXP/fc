@@ -40,10 +40,10 @@ class Guarder:
 def main():
     print("FC guarder start.")
 
-    default_interval = 600
-    min_interval = 60
-    max_interval = 1800
-    max_cordon = 10
+    default_interval = int(os.environ.get("FC_GUARDER_DEFAULT_INTERVAL", "600"))
+    min_interval = int(os.environ.get("FC_GUARDER_MIN_INTERVAL", "60"))
+    max_interval = int(os.environ.get("FC_GUARDER_MAX_INTERVAL", "1800"))
+    max_cordon = int(os.environ.get("FC_GUARDER_MAX_CORDON", "10"))
 
     asleep = False
     cordon = 0
