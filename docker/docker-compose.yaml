@@ -4,6 +4,7 @@ services:
   fc:
     build:
       context: ..
+      dockerfile: docker/Dockerfile
     image: fc
     container_name: fc
     ports:
