@@ -1,6 +1,6 @@
 FROM python:3.9-buster
 
-RUN pip install lavacli==1.2 labgrid==0.4.0; \
+RUN pip install lavacli==1.2 labgrid==0.4.1; \
 pip uninstall -y pyserial; \
 pip install https://github.com/labgrid-project/pyserial/archive/v3.4.0.1.zip#egg=pyserial
 
