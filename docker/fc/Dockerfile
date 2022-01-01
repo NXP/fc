@@ -6,10 +6,10 @@ pip install https://github.com/labgrid-project/pyserial/archive/v3.4.0.1.zip#egg
 
 WORKDIR /fc
 COPY . .
-RUN chmod +x /fc/docker/entrypoint.sh
+RUN chmod +x /fc/docker/fc/entrypoint.sh
 RUN pip install -r requirements.txt
 
 ENV REQUESTS_CA_BUNDLE='/etc/ssl/certs/ca-certificates.crt'
 
-CMD ["/fc/docker/entrypoint.sh"]
+CMD ["/fc/docker/fc/entrypoint.sh"]
 
