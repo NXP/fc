@@ -5,7 +5,6 @@ import asyncio
 import os
 import sys
 import time
-import traceback
 import requests
 
 management_path = os.path.abspath(
@@ -27,8 +26,8 @@ class Guarder:
             output = requests.get(f"{fc_server}/ping")
             if output.status_code == 200 and output.text == "pong":
                 return 0
-        except Exception:  # pylint: disable=broad-except
-            traceback.print_exc()
+        except Exception as exception:  # pylint: disable=broad-except
+            print(exception)
 
         return 1
 
