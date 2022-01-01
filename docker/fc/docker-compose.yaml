@@ -7,6 +7,7 @@ services:
       dockerfile: docker/fc/Dockerfile
     image: fc
     container_name: fc
+    tty: true
     ports:
       - "8600:8600"
     volumes:

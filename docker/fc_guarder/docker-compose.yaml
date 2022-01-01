@@ -7,6 +7,7 @@ services:
       dockerfile: docker/fc_guarder/Dockerfile
     image: fc_guarder
     container_name: fc_guarder
+    tty: true
     volumes:
       - $PWD/../../config/lavacli.yaml:/root/.config/lavacli.yaml
       - $PWD/../../config/cfg.yaml:/fc/config/cfg.yaml
