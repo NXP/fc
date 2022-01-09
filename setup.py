@@ -1,8 +1,9 @@
 from setuptools import setup
+from about import __version__
 
 setup(
     name="fc-client",
-    version="0.1.2",
+    version=__version__,
     author="Larry Shen",
     author_email="larry.shen@nxp.com",
     license="MIT",
