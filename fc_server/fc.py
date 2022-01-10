@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
-from about import __version__
+from fc_common.about import __version__
 from core.coordinator import Coordinator
 
 
