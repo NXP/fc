@@ -4,9 +4,9 @@ import asyncio
 import logging
 
 from importlib import import_module
-from core.api_svr import ApiSvr
-from core.config import Config
-from core.decorators import check_priority_scheduler
+from fc_server.core.api_svr import ApiSvr
+from fc_server.core.config import Config
+from fc_server.core.decorators import check_priority_scheduler
 
 
 class Coordinator:

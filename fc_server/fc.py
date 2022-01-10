@@ -3,7 +3,7 @@
 
 import logging
 from fc_common.about import __version__
-from core.coordinator import Coordinator
+from fc_server.core.coordinator import Coordinator
 
 
 def main():

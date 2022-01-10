@@ -5,9 +5,9 @@ import logging
 import traceback
 import yaml
 
-import common as _
-from core.config import Config
-from core.plugin import AsyncRunMixin
+import fc_server.management.common as _
+from fc_server.core.config import Config
+from fc_server.core.plugin import AsyncRunMixin
 
 
 class LavaManagement(AsyncRunMixin):  # pylint: disable=too-few-public-methods

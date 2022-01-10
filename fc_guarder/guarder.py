@@ -3,18 +3,11 @@
 
 import asyncio
 import os
-import sys
 import time
 import requests
 
-management_path = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "management")
-)
-sys.path.append(management_path)
-
-# pylint: disable=wrong-import-position
-from cmd_online_lava_devices import LavaManagement
-from about import __version__
+from fc_server.management.cmd_online_lava_devices import LavaManagement
+from fc_common.about import __version__
 
 
 class Guarder:
