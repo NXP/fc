@@ -100,7 +100,7 @@ class Coordinator:
             framework
             for framework in self.__framework_priorities.keys()
             if self.__framework_priorities[framework]
-            < self.__framework_priorities[cur_framework]
+            > self.__framework_priorities[cur_framework]
         ]
 
     def is_resource_available(self, context, resource):
