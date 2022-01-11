@@ -9,7 +9,9 @@ import yaml
 class Config:
     @staticmethod
     def parse(fc_path):
-        cfg_file = os.path.join(fc_path, "config", "cfg.yaml")
+        config_path = os.environ.get("FC_CONFIG_PATH", os.path.join(fc_path, "config"))
+        cfg_file = os.path.join(config_path, "cfg.yaml")
+
         with open(cfg_file, "r", encoding="utf-8") as f:  # pylint: disable=invalid-name
             cfg = yaml.load(f, Loader=yaml.FullLoader)
 
