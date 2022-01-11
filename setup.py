@@ -61,16 +61,8 @@ if PKG == "fc-server":
         packages=find_packages(include=("fc_common", "fc_server*")),
         package_data={
             "fc_common": ["VERSION"],
+            "fc_server": ["config/sample_cfg.yaml", "config/sample_lavacli.yaml"],
         },
-        data_files=[
-            (
-                "fc_server",
-                [
-                    "fc_server/config/sample_cfg.yaml",
-                    "fc_server/config/sample_lavacli.yaml",
-                ],
-            )
-        ],
         entry_points={
             "console_scripts": [
                 "fc-server = fc_server.server:main",
