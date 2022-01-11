@@ -58,7 +58,10 @@ if PKG == "fc-server":
     setup(
         **common_setup,
         name="fc-server",
-        packages=find_packages(include=('fc_common', 'fc_server*')),
+        packages=find_packages(include=("fc_common", "fc_server*")),
+        package_data={
+            "fc_common": ["VERSION"],
+        },
         entry_points={
             "console_scripts": [
                 "fc-server = fc_server.fc:main",
