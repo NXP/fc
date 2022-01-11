@@ -4,7 +4,7 @@
 import os
 import sys
 
-from setuptools import setup, Command
+from setuptools import find_packages, setup, Command
 
 from fc_common.version import get_package_version
 
@@ -58,7 +58,7 @@ if PKG == "fc-server":
     setup(
         **common_setup,
         name="fc-server",
-        packages=["fc_common", "fc_server"],
+        packages=find_packages(include=('fc_common', 'fc_server*')),
         entry_points={
             "console_scripts": [
                 "fc-server = fc_server.fc:main",
