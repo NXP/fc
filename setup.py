@@ -62,6 +62,15 @@ if PKG == "fc-server":
         package_data={
             "fc_common": ["VERSION"],
         },
+        data_files=[
+            (
+                "fc_server",
+                [
+                    "fc_server/config/sample_cfg.yaml",
+                    "fc_server/config/sample_lavacli.yaml",
+                ],
+            )
+        ],
         entry_points={
             "console_scripts": [
                 "fc-server = fc_server.server:main",
