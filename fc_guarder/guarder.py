@@ -7,7 +7,7 @@ import time
 import requests
 
 from fc_server.management.cmd_online_lava_devices import LavaManagement
-from fc_common.about import __version__
+from fc_common.version import get_runtime_version
 
 
 class Guarder:
@@ -32,7 +32,7 @@ class Guarder:
 
 def main():
     print("FC guarder start.")
-    print(f"VERSION: {__version__}")
+    print(f"VERSION: {get_runtime_version('fc-guarder')}")
 
     default_interval = int(os.environ.get("FC_GUARDER_DEFAULT_INTERVAL", "600"))
     min_interval = int(os.environ.get("FC_GUARDER_MIN_INTERVAL", "60"))
