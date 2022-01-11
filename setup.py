@@ -1,7 +1,12 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import os
+import sys
 
 from setuptools import setup, Command
-from about import __version__
+
+from fc_common.version import get_package_version
 
 
 class CleanCommand(Command):
@@ -19,15 +24,19 @@ class CleanCommand(Command):
         os.system("rm -vrf ./build ./dist ./*.pyc ./*.tgz ./*.egg-info ./__pycache__")
 
 
-setup(
-    name="fc-client",
-    version=__version__,
-    author="Larry Shen",
-    author_email="larry.shen@nxp.com",
-    license="MIT",
-    python_requires=">=3.6",
-    packages=["fc_client"],
-    classifiers=[
+if sys.argv[-1].startswith("fc"):
+    PKG = sys.argv.pop()
+else:
+    PKG = "fc-server"
+
+
+common_setup = {
+    "version": get_package_version(),
+    "author": "Larry Shen",
+    "author_email": "larry.shen@nxp.com",
+    "license": "MIT",
+    "python_requires": ">=3.6",
+    "classifiers": [
         "Development Status :: 2 - Pre-Alpha",
         "Environment :: Console",
         "Intended Audience :: Developers",
@@ -40,13 +49,44 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3 :: Only",
     ],
-    entry_points={
-        "console_scripts": [
-            "fc-client = fc_client.client:main",
-        ]
-    },
-    install_requires=["prettytable==2.2.1", "labgrid==0.4.0"],
-    cmdclass={
+    "cmdclass": {
         "clean": CleanCommand,
     },
-)
+}
+
+if PKG == "fc-server":
+    setup(
+        **common_setup,
+        name="fc-server",
+        packages=["fc_common", "fc_server"],
+        entry_points={
+            "console_scripts": [
+                "fc-server = fc_server.fc:main",
+            ]
+        },
+        install_requires=["aiohttp==3.7.4.post0", "lavacli==1.2", "labgrid==0.4.1"],
+    )
+elif PKG == "fc-guarder":
+    setup(
+        **common_setup,
+        name="fc-guarder",
+        packages=["fc_guarder"],
+        entry_points={
+            "console_scripts": [
+                "fc-guarder = fc_guarder.guarder:main",
+            ]
+        },
+        install_requires=[f"fc-server=={get_package_version()}"],
+    )
+elif PKG == "fc-client":
+    setup(
+        **common_setup,
+        name="fc-client",
+        packages=["fc_client"],
+        entry_points={
+            "console_scripts": [
+                "fc-client = fc_client.client:main",
+            ]
+        },
+        install_requires=["prettytable==2.2.1", "labgrid==0.4.1"],
+    )
