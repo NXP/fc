@@ -64,7 +64,7 @@ if PKG == "fc-server":
         },
         entry_points={
             "console_scripts": [
-                "fc-server = fc_server.fc:main",
+                "fc-server = fc_server.server:main",
             ]
         },
         install_requires=["aiohttp==3.7.4.post0", "lavacli==1.2", "labgrid==0.4.1"],
