@@ -8,9 +8,10 @@ services:
     image: fc_guarder
     container_name: fc_guarder
     tty: true
-    env_file: .env
+    env_file:
+      - .env
     volumes:
-      - $PWD/../../config/lavacli.yaml:/root/.config/lavacli.yaml
-      - $PWD/../../config/cfg.yaml:/fc/config/cfg.yaml
+      - $PWD/../../fc_server/config/lavacli.yaml:/root/.config/lavacli.yaml
+      - $PWD/../../fc_server/config/cfg.yaml:/fc/fc_server/config/cfg.yaml
       - /etc/localtime:/etc/localtime
       - /usr/local/share/ca-certificates:/usr/local/share/ca-certificates
