@@ -1,1 +1,2 @@
-aiohttp==3.7.4.post0
+-r requirements/server-requirements.txt
+-r requirements/client-requirements.txt
