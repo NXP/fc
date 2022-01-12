@@ -29,6 +29,10 @@ if sys.argv[-1].startswith("fc"):
 else:
     PKG = "fc-server"
 
+LABGRID_PYSERIAL_FIX = (
+    "pyserial @ "
+    "https://github.com/labgrid-project/pyserial/archive/v3.4.0.1.zip#egg=pyserial"
+)
 
 common_setup = {
     "version": get_package_version(),
@@ -68,7 +72,12 @@ if PKG == "fc-server":
                 "fc-server = fc_server.server:main",
             ]
         },
-        install_requires=["aiohttp==3.7.4.post0", "lavacli==1.2", "labgrid==0.4.1"],
+        install_requires=[
+            "aiohttp==3.7.4.post0",
+            "lavacli==1.2",
+            "labgrid==0.4.1",
+            LABGRID_PYSERIAL_FIX,
+        ],
     )
 elif PKG == "fc-guarder":
     setup(
@@ -92,5 +101,9 @@ elif PKG == "fc-client":
                 "fc-client = fc_client.client:main",
             ]
         },
-        install_requires=["prettytable==2.2.1", "labgrid==0.4.1"],
+        install_requires=[
+            "prettytable==2.2.1",
+            "labgrid==0.4.1",
+            LABGRID_PYSERIAL_FIX,
+        ],
     )
