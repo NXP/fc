@@ -15,6 +15,8 @@ import prettytable
 import requests
 import yaml
 
+from fc_common.version import get_runtime_version
+
 
 class Client:
     @staticmethod
@@ -127,6 +129,8 @@ class Client:
 
 
 def main():
+    print(f"FC-CLIENT VERSION: {get_runtime_version('fc-client')}")
+
     parser = argparse.ArgumentParser()
     parser.set_defaults(func=lambda args: parser.print_help())
     parser.add_argument("-r", "--resource", type=str, help="resource name")
