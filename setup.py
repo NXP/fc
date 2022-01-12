@@ -95,7 +95,10 @@ elif PKG == "fc-client":
     setup(
         **common_setup,
         name="fc-client",
-        packages=["fc_client"],
+        packages=["fc_common", "fc_client"],
+        package_data={
+            "fc_common": ["VERSION"],
+        },
         entry_points={
             "console_scripts": [
                 "fc-client = fc_client.client:main",
