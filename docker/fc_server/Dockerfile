@@ -1,15 +1,17 @@
 FROM python:3.9-buster
 
-RUN pip install lavacli==1.2 labgrid==0.4.1; \
-pip uninstall -y pyserial; \
-pip install https://github.com/labgrid-project/pyserial/archive/v3.4.0.1.zip#egg=pyserial
-
 WORKDIR /fc
-COPY . .
-RUN chmod +x /fc/docker/fc/entrypoint.sh
-RUN pip install -r requirements.txt
+
+COPY requirements requirements
+RUN pip install -r requirements/server-requirements.txt
+
+COPY docker docker
+RUN chmod +x /fc/docker/fc_server/entrypoint.sh
+
+COPY fc_common fc_common
+COPY fc_server fc_server
 
 ENV REQUESTS_CA_BUNDLE='/etc/ssl/certs/ca-certificates.crt'
+ENV PYTHONPATH=.
 
-CMD ["/fc/docker/fc/entrypoint.sh"]
-
+CMD ["/fc/docker/fc_server/entrypoint.sh"]

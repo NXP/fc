@@ -2,4 +2,4 @@
 
 update-ca-certificates
 
-exec python /fc/fc.py
+exec python /fc/fc_server/server.py
