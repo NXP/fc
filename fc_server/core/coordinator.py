@@ -16,7 +16,7 @@ class Coordinator:
 
     def __init__(self):
         self.__framework_plugins = [
-            import_module("plugins." + framework).Plugin(
+            import_module("fc_server.plugins." + framework).Plugin(
                 Config.frameworks_config[framework]
             )
             for framework in Config.registered_frameworks
