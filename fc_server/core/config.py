@@ -19,8 +19,9 @@ class Config:
                 cfg = yaml.load(cfg_handle, Loader=yaml.FullLoader)
         except FileNotFoundError as error:
             logging.error(error)
+            logging.error("Put releated configs in %s", config_path)
             logging.error(
-                "You should set `FC_CONFIG_PATH` and put related configs in it."
+                "Instead, you could also set `FC_CONFIG_PATH` to override the default path."
             )
             sys.exit(1)
 
