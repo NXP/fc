@@ -2,7 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import os
+import pathlib
 import sys
+import importlib_metadata
 
 from setuptools import find_packages, setup, Command
 
@@ -24,10 +26,23 @@ class CleanCommand(Command):
         os.system("rm -vrf ./build ./dist ./*.pyc ./*.tgz ./*.egg-info ./__pycache__")
 
 
+def get_project_name():
+    for dist in importlib_metadata.distributions():
+        try:
+            relative = pathlib.Path(__file__).relative_to(dist.locate_file(""))
+        except ValueError:
+            pass
+        else:
+            if relative in dist.files:
+                return dist.metadata["Name"]
+    return None
+
+
 if sys.argv[-1].startswith("fc"):
     PKG = sys.argv.pop()
 else:
-    PKG = "fc-server"
+    project = get_project_name()
+    PKG = project
 
 LABGRID_PYSERIAL_FIX = (
     "pyserial @ "
