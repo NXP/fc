@@ -4,7 +4,7 @@
 import os
 import pathlib
 import sys
-import importlib_metadata
+import pkg_resources
 
 from setuptools import find_packages, setup, Command
 
@@ -27,22 +27,23 @@ class CleanCommand(Command):
 
 
 def get_project_name():
-    for dist in importlib_metadata.distributions():
-        try:
-            relative = pathlib.Path(__file__).relative_to(dist.locate_file(""))
-        except ValueError:
-            pass
-        else:
-            if relative in dist.files:
-                return dist.metadata["Name"]
-    return None
+    for dist in pkg_resources.AvailableDistributions():
+        if dist.startswith("fc"):
+            try:
+                pathlib.Path(__file__).relative_to(
+                    pkg_resources.get_distribution(dist).location
+                )
+            except ValueError:
+                pass
+            else:
+                return dist
+    return "fc-client"
 
 
 if sys.argv[-1].startswith("fc"):
     PKG = sys.argv.pop()
 else:
-    project = get_project_name()
-    PKG = project
+    PKG = get_project_name()
 
 LABGRID_PYSERIAL_FIX = (
     "pyserial @ "
