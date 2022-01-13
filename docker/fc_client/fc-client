@@ -1,0 +1,3 @@
+#!/bin/bash
+
+PYTHONPATH=/fc python3 /fc/fc_client/client.py $@
