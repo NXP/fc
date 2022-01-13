@@ -48,24 +48,6 @@ else:
 LABGRID_PYSERIAL_FIX = "pyserial-labgrid==3.4.0.1"
 
 common_setup = {
-    "version": get_package_version(),
-    "author": "Larry Shen",
-    "author_email": "larry.shen@nxp.com",
-    "license": "MIT",
-    "python_requires": ">=3.6",
-    "classifiers": [
-        "Development Status :: 2 - Pre-Alpha",
-        "Environment :: Console",
-        "Intended Audience :: Developers",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: POSIX :: Linux",
-        "Programming Language :: Python",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3 :: Only",
-    ],
     "cmdclass": {
         "clean": CleanCommand,
     },
