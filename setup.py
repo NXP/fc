@@ -45,10 +45,7 @@ if sys.argv[-1].startswith("fc"):
 else:
     PKG = get_project_name()
 
-LABGRID_PYSERIAL_FIX = (
-    "pyserial @ "
-    "https://github.com/labgrid-project/pyserial/archive/v3.4.0.1.zip#egg=pyserial"
-)
+LABGRID_PYSERIAL_FIX = "pyserial-labgrid==3.4.0.1"
 
 common_setup = {
     "version": get_package_version(),
