@@ -25,7 +25,20 @@ class Config:
             )
             sys.exit(1)
 
-        Config.managed_resources = cfg["managed_resources"]
+        managed_resources = cfg["managed_resources"]
+        if isinstance(managed_resources, str):
+            if not os.path.isabs(managed_resources):
+                managed_resources = os.path.join(config_path, managed_resources)
+            try:
+                with open(managed_resources, "r", encoding="utf-8") as resources_handle:
+                    managed_resources = yaml.load(
+                        resources_handle, Loader=yaml.FullLoader
+                    )
+            except FileNotFoundError as error:
+                logging.error(error)
+                sys.exit(1)
+
+        Config.managed_resources = managed_resources
         Config.registered_frameworks = cfg["registered_frameworks"]
         Config.frameworks_config = cfg["frameworks_config"]
         Config.priority_scheduler = cfg.get("priority_scheduler", False)
