@@ -42,7 +42,17 @@ class Config:
                 sys.exit(1)
 
         Config.raw_managed_resources = raw_managed_resources
+
         Config.managed_resources = flatdict.FlatterDict(raw_managed_resources).values()
+        Config.managed_resources_farm_types = {}
+        for farm_type, raw_managed_resource in raw_managed_resources.items():
+            Config.managed_resources_farm_types.update(
+                {
+                    resource: farm_type
+                    for resource in flatdict.FlatterDict(raw_managed_resource).values()
+                }
+            )
+
         Config.registered_frameworks = cfg["registered_frameworks"]
         Config.frameworks_config = cfg["frameworks_config"]
         Config.priority_scheduler = cfg.get("priority_scheduler", False)
