@@ -3,6 +3,7 @@
 import logging
 import os
 import sys
+import flatdict
 import yaml
 
 # pylint: disable=too-few-public-methods
@@ -25,20 +26,23 @@ class Config:
             )
             sys.exit(1)
 
-        managed_resources = cfg["managed_resources"]
-        if isinstance(managed_resources, str):
-            if not os.path.isabs(managed_resources):
-                managed_resources = os.path.join(config_path, managed_resources)
+        raw_managed_resources = cfg["managed_resources"]
+        if isinstance(raw_managed_resources, str):
+            if not os.path.isabs(raw_managed_resources):
+                raw_managed_resources = os.path.join(config_path, raw_managed_resources)
             try:
-                with open(managed_resources, "r", encoding="utf-8") as resources_handle:
-                    managed_resources = yaml.load(
+                with open(
+                    raw_managed_resources, "r", encoding="utf-8"
+                ) as resources_handle:
+                    raw_managed_resources = yaml.load(
                         resources_handle, Loader=yaml.FullLoader
                     )
             except FileNotFoundError as error:
                 logging.error(error)
                 sys.exit(1)
 
-        Config.managed_resources = managed_resources
+        Config.raw_managed_resources = raw_managed_resources
+        Config.managed_resources = flatdict.FlatterDict(raw_managed_resources).values()
         Config.registered_frameworks = cfg["registered_frameworks"]
         Config.frameworks_config = cfg["frameworks_config"]
         Config.priority_scheduler = cfg.get("priority_scheduler", False)
