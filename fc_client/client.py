@@ -32,9 +32,9 @@ class Client:
             data = output_data.get("body", {})
 
             table = prettytable.PrettyTable()
-            table.field_names = ["Resource", "Owner", "Comment"]
+            table.field_names = ["Resource", "Farm", "Owner", "Comment"]
             for resource in data:
-                if len(resource) == 2:
+                if len(resource) == 3:
                     resource.append("")
                 if specified_resource:
                     if resource[0] == specified_resource:

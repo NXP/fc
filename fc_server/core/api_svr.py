@@ -4,6 +4,7 @@ import asyncio
 import logging
 
 from aiohttp import web
+from fc_server.core.config import Config
 
 
 class ApiSvr:
@@ -30,10 +31,12 @@ class ApiSvr:
                 item = []
                 if resource not in labgrid_managed_resources:
                     item.append(resource)
+                    item.append(Config.managed_resources_farm_types.get(resource, ""))
                     item.append(status)
                     item.append("non-debuggable")
                 else:
                     item.append(resource)
+                    item.append(Config.managed_resources_farm_types.get(resource, ""))
                     item.append(status)
                 resources_status_info.append(item)
 
