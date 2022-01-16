@@ -10,7 +10,8 @@ from fc_server.core.decorators import (
     check_seize_strategy,
     safe_cache,
 )
-from fc_server.core.plugin import AsyncRunMixin, FCPlugin
+from fc_server.core import AsyncRunMixin
+from fc_server.core.plugin import FCPlugin
 
 
 class Plugin(FCPlugin, AsyncRunMixin):

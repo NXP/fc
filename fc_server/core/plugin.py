@@ -1,26 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import asyncio
-
-
-class AsyncRunMixin:  # pylint: disable=too-few-public-methods
-    """
-    Mixin for async subprocess call
-    """
-
-    async def _run_cmd(self, cmd):  # pylint: disable=no-self-use
-        proc = await asyncio.create_subprocess_shell(
-            cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-        )
-        stdout, stderr = await proc.communicate()
-
-        if proc.returncode != 0:
-            print(f"[{cmd!r} exited with {proc.returncode}]")
-        if stderr:
-            print(f"[{cmd!r} stderr]\n{stderr.decode()}")
-
-        return proc.returncode, stdout, stderr
-
 
 class FCPlugin:
     """
