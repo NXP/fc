@@ -2,21 +2,26 @@
 
 import asyncio
 import logging
+from string import Template
 
 import flatdict
 from aiohttp import web
+from fc_server.core import AsyncRunMixin
 from fc_server.core.config import Config
 
 
-class ApiSvr:
+class ApiSvr(AsyncRunMixin):
     """
     Rest api server
     """
 
     def __init__(self, context):
         self.context = context
+        self.external_info_tool = Config.api_server.get("external_info_tool", "")
 
-    async def resource_status(self, request):  # pylint: disable=too-many-branches
+    async def resource_status(
+        self, request
+    ):  # pylint: disable=too-many-branches, too-many-locals, too-many-statements
         # get all labgrid managed resources
         labgrid_managed_resources = []
         for framework in self.context.framework_instances:
@@ -28,12 +33,28 @@ class ApiSvr:
 
         resources_info = []
         if res:
+            # fetch external resource info if needed
+            if self.external_info_tool:
+                fc_resource = res
+                fc_farm_type = Config.managed_resources_farm_types.get(res, "")
+                template = Template(self.external_info_tool)
+                tool_command = template.substitute(
+                    {"fc_resource": fc_resource, "fc_farm_type": fc_farm_type}
+                )
+                ret, info, _ = await self._run_cmd(tool_command)
+
             item = []
             item.append(res)
             item.append(Config.managed_resources_farm_types.get(res, ""))
             item.append(self.context.managed_resources_status.get(res, ""))
             if res not in labgrid_managed_resources:
                 item.append("non-debuggable")
+            else:
+                item.append("")
+            if ret == 0:
+                item.append(info)
+            else:
+                item.append("NA")
             resources_info.append(item)
         else:
             params = request.rel_url.query
@@ -67,6 +88,20 @@ class ApiSvr:
                     item.append("non-debuggable")
                 else:
                     item.append("")
+                # fetch external resource info if needed
+                if self.external_info_tool and device_type:
+                    fc_resource = resource
+                    fc_farm_type = Config.managed_resources_farm_types.get(resource, "")
+                    template = Template(self.external_info_tool)
+                    tool_command = template.substitute(
+                        {"fc_resource": fc_resource, "fc_farm_type": fc_farm_type}
+                    )
+                    ret, info, _ = await self._run_cmd(tool_command)
+                    if ret == 0:
+                        item.append(info)
+                    else:
+                        item.append("NA")
+
                 resources_info.append(item)
 
         return web.json_response(resources_info)

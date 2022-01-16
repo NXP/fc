@@ -45,7 +45,12 @@ class Client:
         output_data = json.loads(output.text)
 
         table = prettytable.PrettyTable()
-        table.field_names = ["Resource", "Farm", "Owner", "Comment"]
+
+        if specified_resource or specified_device_type:
+            table.field_names = ["Resource", "Farm", "Owner", "Comment", "Info"]
+        else:
+            table.field_names = ["Resource", "Farm", "Owner", "Comment"]
+
         for resource in output_data:
             table.add_row(resource)
 
