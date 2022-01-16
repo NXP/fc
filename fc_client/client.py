@@ -50,7 +50,8 @@ class Client:
             if len(resource) == 3:
                 resource.append("")
             table.add_row(resource)
-        print(table)
+
+        print(table.get_string(sortby="Resource"))
 
     @staticmethod
     def lock(args):
