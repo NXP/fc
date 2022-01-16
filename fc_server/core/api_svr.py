@@ -65,6 +65,8 @@ class ApiSvr:
                 item.append(status)
                 if resource not in labgrid_managed_resources:
                     item.append("non-debuggable")
+                else:
+                    item.append("")
                 resources_info.append(item)
 
         return web.json_response(resources_info)

@@ -47,8 +47,6 @@ class Client:
         table = prettytable.PrettyTable()
         table.field_names = ["Resource", "Farm", "Owner", "Comment"]
         for resource in output_data:
-            if len(resource) == 3:
-                resource.append("")
             table.add_row(resource)
 
         print(table.get_string(sortby="Resource"))
