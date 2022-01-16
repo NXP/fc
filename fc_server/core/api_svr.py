@@ -76,6 +76,7 @@ class ApiSvr(AsyncRunMixin):
             else:
                 scope = ["all"]
 
+            tool_command_list = []
             for resource, status in self.context.managed_resources_status.items():
                 if scope != ["all"] and resource not in scope:
                     continue
@@ -88,6 +89,9 @@ class ApiSvr(AsyncRunMixin):
                     item.append("non-debuggable")
                 else:
                     item.append("")
+
+                resources_info.append(item)
+
                 # fetch external resource info if needed
                 if self.external_info_tool and device_type:
                     fc_resource = resource
@@ -96,13 +100,14 @@ class ApiSvr(AsyncRunMixin):
                     tool_command = template.substitute(
                         {"fc_resource": fc_resource, "fc_farm_type": fc_farm_type}
                     )
-                    ret, info, _ = await self._run_cmd(tool_command)
-                    if ret == 0:
-                        item.append(info)
-                    else:
-                        item.append("NA")
+                    tool_command_list.append(self._run_cmd(tool_command))
 
-                resources_info.append(item)
+            external_info_list = await asyncio.gather(*tool_command_list)
+            for index, value in enumerate(external_info_list):
+                if value[0] == 0:
+                    resources_info[index].append(value[1].decode())
+                else:
+                    resources_info[index].append("NA")
 
         return web.json_response(resources_info)
 
