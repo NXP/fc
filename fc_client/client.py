@@ -46,13 +46,15 @@ class Client:
 
         table = prettytable.PrettyTable()
 
-        if specified_resource or specified_device_type:
+        table_width = 4
+        for resource in output_data:
+            table.add_row(resource)
+            table_width = len(resource)
+
+        if table_width == 5:
             table.field_names = ["Resource", "Farm", "Owner", "Comment", "Info"]
         else:
             table.field_names = ["Resource", "Farm", "Owner", "Comment"]
-
-        for resource in output_data:
-            table.add_row(resource)
 
         print(table.get_string(sortby="Resource"))
 
