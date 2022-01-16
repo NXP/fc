@@ -22,30 +22,35 @@ class Client:
     @staticmethod
     def status(args):
         specified_resource = args.resource
+        specified_farm_type = args.farm_type
+        specified_device_type = args.device_type
 
         fc_server = os.environ.get("FC_SERVER", "http://127.0.0.1:8600")
-        output = requests.get(f"{fc_server}/resource")
+
+        if specified_resource:
+            url = f"{fc_server}/resource/{specified_resource}"
+        elif specified_farm_type and specified_device_type:
+            url = (
+                f"{fc_server}/resource"
+                f"?farmtype={specified_farm_type}&devicetype={specified_device_type}"
+            )
+        elif specified_farm_type:
+            url = f"{fc_server}/resource?farmtype={specified_farm_type}"
+        elif specified_device_type:
+            url = f"{fc_server}/resource?devicetype={specified_device_type}"
+        else:
+            url = f"{fc_server}/resource"
+
+        output = requests.get(url)
         output_data = json.loads(output.text)
 
-        ret = output_data.get("rc", -1)
-        if ret == 0:
-            data = output_data.get("body", {})
-
-            table = prettytable.PrettyTable()
-            table.field_names = ["Resource", "Farm", "Owner", "Comment"]
-            for resource in data:
-                if len(resource) == 3:
-                    resource.append("")
-                if specified_resource:
-                    if resource[0] == specified_resource:
-                        table.add_row(resource)
-                        break
-                else:
-                    table.add_row(resource)
-            print(table)
-        else:
-            print(f"Errorcode {ret} returned from fc coordinator.")
-            sys.exit(1)
+        table = prettytable.PrettyTable()
+        table.field_names = ["Resource", "Farm", "Owner", "Comment"]
+        for resource in output_data:
+            if len(resource) == 3:
+                resource.append("")
+            table.add_row(resource)
+        print(table)
 
     @staticmethod
     def lock(args):
@@ -134,6 +139,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.set_defaults(func=lambda args: parser.print_help())
     parser.add_argument("-r", "--resource", type=str, help="resource name")
+    parser.add_argument("-f", "--farm-type", type=str, help="farm type")
+    parser.add_argument("-d", "--device-type", type=str, help="device type")
 
     subparsers = parser.add_subparsers(
         dest="command",
