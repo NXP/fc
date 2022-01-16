@@ -69,6 +69,7 @@ if PKG == "fc-server":
         },
         install_requires=[
             "aiohttp==3.7.4.post0",
+            "flatdict==4.0.1",
             "lavacli==1.2",
             "labgrid==0.4.1",
             LABGRID_PYSERIAL_FIX,
