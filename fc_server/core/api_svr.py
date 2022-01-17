@@ -105,7 +105,7 @@ class ApiSvr(AsyncRunMixin):
             external_info_list = await asyncio.gather(*tool_command_list)
             for index, value in enumerate(external_info_list):
                 if value[0] == 0:
-                    resources_info[index].append(value[1].decode())
+                    resources_info[index].append(value[1])
                 else:
                     resources_info[index].append("NA")
 
