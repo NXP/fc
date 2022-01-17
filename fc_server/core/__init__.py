@@ -28,4 +28,4 @@ class AsyncRunMixin:  # pylint: disable=too-few-public-methods
         if stderr:
             print(f"[{cmd!r} stderr]\n{stderr.decode()}")
 
-        return proc.returncode, stdout, stderr
+        return proc.returncode, stdout.decode(), stderr.decode()
