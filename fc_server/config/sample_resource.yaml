@@ -1,0 +1,4 @@
+$farm_type:
+  $device_type:
+    - $resource1
+    - $resource2
