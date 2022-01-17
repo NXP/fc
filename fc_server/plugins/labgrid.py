@@ -91,7 +91,6 @@ class Plugin(FCPlugin, AsyncRunMixin):
 
         cmd = f"labgrid-client -p {resource} show"
         _, place_info_text, _ = await self._run_cmd(cmd)
-        place_info_text = place_info_text.decode()
 
         token = ""
         place_info_lines = place_info_text.splitlines()
@@ -213,7 +212,7 @@ class Plugin(FCPlugin, AsyncRunMixin):
         _, places, _ = await self._run_cmd(cmd)
         self.managed_resources = [
             place.strip()
-            for place in places.decode().splitlines()
+            for place in places.splitlines()
             if place.strip() in driver.managed_resources
         ]
 
