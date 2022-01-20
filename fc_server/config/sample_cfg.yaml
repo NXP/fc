@@ -17,5 +17,7 @@ api_server:
   port: 8600
 
 managed_resources:
-  - $resource1
-  - $resource2
+  $farm_type:
+    $device_type:
+      - $resource1
+      - $resource2
