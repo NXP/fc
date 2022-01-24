@@ -33,6 +33,15 @@ class ApiSvr(AsyncRunMixin):
 
         resources_info = []
         if res:
+            item = []
+            item.append(res)
+            item.append(Config.managed_resources_farm_types.get(res, ""))
+            item.append(self.context.managed_resources_status.get(res, ""))
+            if res not in labgrid_managed_resources:
+                item.append("non-debuggable")
+            else:
+                item.append("")
+
             # fetch external resource info if needed
             if self.external_info_tool:
                 fc_resource = res
@@ -43,18 +52,11 @@ class ApiSvr(AsyncRunMixin):
                 )
                 ret, info, _ = await self._run_cmd(tool_command)
 
-            item = []
-            item.append(res)
-            item.append(Config.managed_resources_farm_types.get(res, ""))
-            item.append(self.context.managed_resources_status.get(res, ""))
-            if res not in labgrid_managed_resources:
-                item.append("non-debuggable")
-            else:
-                item.append("")
-            if ret == 0:
-                item.append(info)
-            else:
-                item.append("NA")
+                if ret == 0:
+                    item.append(info)
+                else:
+                    item.append("NA")
+
             resources_info.append(item)
         else:
             params = request.rel_url.query
