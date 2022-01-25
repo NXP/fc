@@ -6,8 +6,8 @@ project = 'FC'
 copyright = '2021-2022, NXP, Larry Shen'
 author = 'Larry Shen'
 
-release = '0.1'
-version = '0.1.0'
+release = '0.3'
+version = '0.3.0'
 
 # -- General configuration
 
