@@ -8,13 +8,13 @@ Installation
 
 FC could be installed by ``pip``.
 
-* fc-server
+* **fc-server**
 
 .. code-block:: console
 
   $ sudo pip3 install fc-server
 
-* fc-client
+* **fc-client**
 
 .. code-block:: console
 
@@ -22,7 +22,7 @@ FC could be installed by ``pip``.
   $ sudo apt-get install -y microcom corkscrew
   $ sudo pip3 install fc-client
 
-* fc-guarder
+* **fc-guarder**
 
 .. code-block:: console
 
@@ -40,19 +40,28 @@ Run
 Run with native package
 +++++++++++++++++++++++
 
-* fc-server
+* **fc-server**
 
 .. code-block:: console
 
   $ fc-server
 
-* fc-client
+* **fc-client**
 
 .. code-block:: console
 
   $ fc-client
 
-* fc-guarder
+.. note::
+
+    Two environments should be specified before you run ``fc-client``, this let the client could find correct instance of ``labgrid-coordinator`` and ``fc-server``.
+
+.. code-block:: bash
+
+    export LG_CROSSBAR=ws://$labgrid_server_ip:20408/ws
+    export FC_SERVER=http://$fc_server_ip:8600
+
+* **fc-guarder**
 
 .. code-block:: console
 
@@ -63,7 +72,7 @@ Run with native package
 Run with docker package
 +++++++++++++++++++++++
 
-* fc-server
+* **fc-server**
 
 .. code-block:: console
 
@@ -71,14 +80,23 @@ Run with docker package
   $ cd fc/docker/fc_server
   $ docker-compose up -d
 
-* fc-client
+* **fc-client**
 
 .. code-block:: console
 
   $ docker run --rm -it atline/fc-client /bin/bash
   root@08ab13f5f363:~# fc-client
 
-* fc-guarder
+.. note::
+
+    Two environments should be specified in container before you run ``fc-client``, this let the client could find correct instance of ``labgrid-coordinator`` and ``fc-server``.
+
+.. code-block:: bash
+
+    export LG_CROSSBAR=ws://$labgrid_server_ip:20408/ws
+    export FC_SERVER=http://$fc_server_ip:8600
+
+* **fc-guarder**
 
 .. code-block:: console
 
