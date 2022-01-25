@@ -18,6 +18,8 @@ FC could be installed by ``pip``.
 
 .. code-block:: console
 
+  $ sudo apt-get update
+  $ sudo apt-get install -y microcom corkscrew
   $ sudo pip3 install fc-client
 
 * fc-guarder
@@ -30,6 +32,10 @@ Additional, you can also use FC using docker, details see :ref:`Run with docker 
 
 Run
 ---
+
+.. note::
+
+   Before run, you will certainly want to have a look for :doc:`configuration` section to know how to configure different components.
 
 Run with native package
 +++++++++++++++++++++++
