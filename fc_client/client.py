@@ -162,7 +162,10 @@ class Client:
 
 
 def main():
-    print(f"FC-CLIENT VERSION: {get_runtime_version('fc-client')}")
+    print(
+        f"FC-CLIENT VERSION: {get_runtime_version('fc-client')}, "
+        "HOMEPAGE: https://fc.readthedocs.org/"
+    )
 
     parser = argparse.ArgumentParser()
     parser.set_defaults(func=lambda args: parser.print_help())
