@@ -12,6 +12,6 @@ services:
       - .env
     volumes:
       - $PWD/../../fc_server/config/lavacli.yaml:/root/.config/lavacli.yaml
-      - $PWD/../../fc_server/config/cfg.yaml:/fc/fc_server/config/cfg.yaml
+      - $PWD/../../fc_server/config/:/fc/fc_server/config/
       - /etc/localtime:/etc/localtime
       - /usr/local/share/ca-certificates:/usr/local/share/ca-certificates
