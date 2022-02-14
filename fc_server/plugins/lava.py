@@ -245,93 +245,119 @@ class Plugin(FCPlugin, AsyncRunMixin):
 
         # query job queue
         possible_resources = []
-        cmd = f"lavacli -i {self.identities} jobs queue --limit=1000 --yaml"
-        _, queued_jobs_text, _ = await self._run_cmd(cmd)
 
-        try:
-            queued_jobs = yaml.load(queued_jobs_text, Loader=yaml.FullLoader)
+        queued_jobs = []
+        seq = 0
+        while True:
+            cmd_list = []
+            batch_num = 5
+            jobs_per_batch = 100
+            for cnt in range(batch_num):
+                cmd = (
+                    f"lavacli -i {self.identities} jobs queue "
+                    f"--start={batch_num * jobs_per_batch * seq + cnt * jobs_per_batch} "
+                    f"--limit={jobs_per_batch} --yaml"
+                )
+                cmd_list.append(cmd)
 
-            # clean cache to save memory
-            queued_jobs_ids = [queued_job["id"] for queued_job in queued_jobs]
-            for job_id in list(self.job_tags_cache.keys()):
-                if job_id not in queued_jobs_ids:
-                    del self.job_tags_cache[job_id]
+            queued_jobs_infos = await asyncio.gather(
+                *[self._run_cmd(cmd) for cmd in cmd_list]
+            )
 
-            # get tags for queued jobs
-            job_tags_list = await asyncio.gather(
+            one_batch_queued_jobs = []
+            for queued_jobs_info in queued_jobs_infos:
+                try:
+                    one_batch_queued_jobs += yaml.load(
+                        queued_jobs_info[1], Loader=yaml.FullLoader
+                    )
+                except yaml.YAMLError:
+                    logging.error(traceback.format_exc())
+
+            queued_jobs += one_batch_queued_jobs
+
+            if len(one_batch_queued_jobs) < batch_num * jobs_per_batch:
+                break
+
+            seq += 1
+
+        # clean cache to save memory
+        queued_jobs_ids = [queued_job["id"] for queued_job in queued_jobs]
+        for job_id in list(self.job_tags_cache.keys()):
+            if job_id not in queued_jobs_ids:
+                del self.job_tags_cache[job_id]
+
+        # get tags for queued jobs
+        job_tags_list = await asyncio.gather(
+            *[
+                self.__get_job_tags(queued_job["id"])
+                for queued_job in queued_jobs
+                if queued_job["id"] not in self.job_tags_cache
+            ]
+        )
+        self.job_tags_cache.update(dict(job_tags_list))
+
+        # get devices suitable for queued jobs
+        queued_jobs.reverse()
+        for queued_job in queued_jobs:
+            candidated_available_devices = managed_resources_category["available"].get(
+                queued_job["requested_device_type"], []
+            )
+
+            job_id = queued_job["id"]
+
+            candidated_available_resources = []
+
+            if job_id not in self.scheduler_cache:
+                self.scheduler_cache[job_id] = []
+
+            available_device_tags_list = await asyncio.gather(
                 *[
-                    self.__get_job_tags(queued_job["id"])
-                    for queued_job in queued_jobs
-                    if queued_job["id"] not in self.job_tags_cache
+                    self.__get_device_tags(candidated_available_device)
+                    for candidated_available_device in candidated_available_devices
+                    if candidated_available_device not in self.scheduler_cache[job_id]
                 ]
             )
-            self.job_tags_cache.update(dict(job_tags_list))
+            available_device_tags_dict = dict(available_device_tags_list)
 
-            # get devices suitable for queued jobs
-            queued_jobs.reverse()
-            for queued_job in queued_jobs:
-                candidated_available_devices = managed_resources_category[
-                    "available"
-                ].get(queued_job["requested_device_type"], [])
+            for device, tags in available_device_tags_dict.items():
+                if set(self.job_tags_cache[job_id]).issubset(tags):
+                    candidated_available_resources.append(device)
 
-                job_id = queued_job["id"]
+                    if driver.is_seized_resource(self, device):
+                        driver.clear_seized_job_records(device)
 
-                candidated_available_resources = []
+            self.__update_cache(
+                "scheduler_cache", job_id, list(available_device_tags_dict.keys())
+            )
+            possible_resources += candidated_available_resources
 
-                if job_id not in self.scheduler_cache:
-                    self.scheduler_cache[job_id] = []
-
-                available_device_tags_list = await asyncio.gather(
-                    *[
-                        self.__get_device_tags(candidated_available_device)
-                        for candidated_available_device in candidated_available_devices
-                        if candidated_available_device
-                        not in self.scheduler_cache[job_id]
-                    ]
-                )
-                available_device_tags_dict = dict(available_device_tags_list)
-
-                for device, tags in available_device_tags_dict.items():
-                    if set(self.job_tags_cache[job_id]).issubset(tags):
-                        candidated_available_resources.append(device)
-
-                        if driver.is_seized_resource(self, device):
-                            driver.clear_seized_job_records(device)
-
-                self.__update_cache(
-                    "scheduler_cache", job_id, list(available_device_tags_dict.keys())
-                )
-                possible_resources += candidated_available_resources
-
-                # pylint: disable=cell-var-from-loop
-                @check_priority_scheduler(driver)
-                @check_seize_strategy(driver, self)
-                @safe_cache
-                def lava_seize_resource(*_):
-                    candidated_non_available_devices = [
-                        non_available_device
-                        for non_available_device in managed_resources_category[
-                            "non-available"
-                        ].get(queued_job["requested_device_type"], [])
-                        if non_available_device not in self.seize_cache[job_id]
-                    ]
-                    if (
-                        not candidated_available_resources
-                        and not driver.is_seized_job(job_id)
-                        and candidated_non_available_devices
-                    ):
-                        # no available resource found, try to seize from other framework
-                        asyncio.create_task(
-                            self.__seize_resource(
-                                driver, job_id, candidated_non_available_devices
-                            )
+            # pylint: disable=cell-var-from-loop
+            @check_priority_scheduler(driver)
+            @check_seize_strategy(driver, self)
+            @safe_cache
+            def lava_seize_resource(*_):
+                candidated_non_available_devices = [
+                    non_available_device
+                    for non_available_device in managed_resources_category[
+                        "non-available"
+                    ].get(queued_job["requested_device_type"], [])
+                    if non_available_device not in self.seize_cache[job_id]
+                ]
+                if (
+                    not candidated_available_resources
+                    and not driver.is_seized_job(job_id)
+                    and candidated_non_available_devices
+                ):
+                    # no available resource found, try to seize from other framework
+                    asyncio.create_task(
+                        self.__seize_resource(
+                            driver, job_id, candidated_non_available_devices
                         )
+                    )
 
-                lava_seize_resource(self, "seize_cache", job_id)
+            lava_seize_resource(self, "seize_cache", job_id)
 
-            possible_resources = set(possible_resources)
-        except yaml.YAMLError:
-            logging.error(traceback.format_exc())
+        possible_resources = set(possible_resources)
 
         # let lava dispatch
         if possible_resources:
