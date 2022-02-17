@@ -125,14 +125,24 @@ class Plugin(FCPlugin, AsyncRunMixin):
         cmd = f"lavacli -i {self.identities} jobs show {job_id} --yaml"
         _, job_info_text, _ = await self._run_cmd(cmd)
 
-        job_info = yaml.load(job_info_text, Loader=yaml.FullLoader)
+        try:
+            job_info = yaml.load(job_info_text, Loader=yaml.FullLoader)
+        except yaml.YAMLError:
+            logging.error(traceback.format_exc())
+            return job_id, []
+
         return job_id, job_info["tags"]
 
     async def __get_device_tags(self, device):
         cmd = f"lavacli -i {self.identities} devices show {device} --yaml"
         _, device_info_text, _ = await self._run_cmd(cmd)
 
-        device_info = yaml.load(device_info_text, Loader=yaml.FullLoader)
+        try:
+            device_info = yaml.load(device_info_text, Loader=yaml.FullLoader)
+        except yaml.YAMLError:
+            logging.error(traceback.format_exc())
+            return device, []
+
         return device, device_info["tags"]
 
     async def force_kick_off(self, resource):
@@ -143,7 +153,12 @@ class Plugin(FCPlugin, AsyncRunMixin):
         cmd = f"lavacli -i {self.identities} devices show {resource} --yaml"
         _, device_info_text, _ = await self._run_cmd(cmd)
 
-        device_info = yaml.load(device_info_text, Loader=yaml.FullLoader)
+        try:
+            device_info = yaml.load(device_info_text, Loader=yaml.FullLoader)
+        except yaml.YAMLError:
+            logging.error(traceback.format_exc())
+            return
+
         current_job = device_info["current_job"]
 
         if current_job:

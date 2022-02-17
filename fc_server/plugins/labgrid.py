@@ -124,7 +124,12 @@ class Plugin(FCPlugin, AsyncRunMixin):
         if token:
             cmd = "labgrid-client reservations"
             _, reservations_text, _ = await self._run_cmd(cmd)
-            reservations = yaml.load(reservations_text, Loader=yaml.FullLoader)
+            try:
+                reservations = yaml.load(reservations_text, Loader=yaml.FullLoader)
+            except yaml.YAMLError:
+                logging.error(traceback.format_exc())
+                return
+
             for reservation in reservations.keys():
                 if reservation == f"Reservation '{token}'":
                     await self._run_cmd(f"labgrid-client cancel-reservation {token}")
