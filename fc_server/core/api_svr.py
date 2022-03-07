@@ -150,9 +150,29 @@ class ApiSvr(AsyncRunMixin):
     async def pong(_):
         return web.Response(text="pong")
 
+    async def booking(self, _):
+        cmd = "labgrid-client who | grep -v fc"
+        _, bookings_text, _ = await self._run_cmd(cmd)
+
+        bookings_text_list = []
+        header = True
+        anchor = -1
+        for booking_text in bookings_text.splitlines():
+            if header:
+                anchor = booking_text.find("Place")
+                bookings_text_list.append(booking_text)
+                header = False
+                continue
+
+            if booking_text[anchor:].split(" ")[0] in Config.managed_resources:
+                bookings_text_list.append(booking_text)
+
+        return web.Response(text="\n".join(bookings_text_list))
+
     async def start(self, port):
         app = web.Application()
         app.add_routes([web.get("/ping", self.pong)])
+        app.add_routes([web.get("/booking", self.booking)])
         app.add_routes([web.get("/resource", self.resource_status)])
         app.add_routes([web.get("/resource/{res}", self.resource_status)])
 

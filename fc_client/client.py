@@ -42,6 +42,13 @@ from fc_common.version import get_runtime_version
 
 class Client:
     @staticmethod
+    def booking(_):
+        fc_server = os.environ.get("FC_SERVER", "http://127.0.0.1:8600")
+        url = f"{fc_server}/booking"
+        output = requests.get(url)
+        print(output.text)
+
+    @staticmethod
     def status(args):
         specified_resource = args.resource
         specified_farm_type = args.farm_type
@@ -193,6 +200,11 @@ def main():
         "unlock", aliases=("u",), help="labgrid unlock resource"
     )
     subparser.set_defaults(func=Client.unlock)
+
+    subparser = subparsers.add_parser(
+        "booking", aliases=("b",), help="list current booking"
+    )
+    subparser.set_defaults(func=Client.booking)
 
     args = parser.parse_args()
     args.func(args)
