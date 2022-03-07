@@ -23,6 +23,7 @@
 
 
 import asyncio
+from contextlib import suppress
 import logging
 from string import Template
 
@@ -41,6 +42,12 @@ class ApiSvr(AsyncRunMixin):
         self.context = context
         self.external_info_tool = Config.api_server.get("external_info_tool", "")
 
+    @staticmethod
+    def friendly_status(status):
+        with suppress(Exception):
+            return Config.frameworks_config[status]["friendly_status"]
+        return status
+
     async def resource_status(
         self, request
     ):  # pylint: disable=too-many-branches, too-many-locals, too-many-statements
@@ -58,7 +65,11 @@ class ApiSvr(AsyncRunMixin):
             item = []
             item.append(res)
             item.append(Config.managed_resources_farm_types.get(res, ""))
-            item.append(self.context.managed_resources_status.get(res, ""))
+            item.append(
+                ApiSvr.friendly_status(
+                    self.context.managed_resources_status.get(res, "")
+                )
+            )
             if res not in labgrid_managed_resources:
                 item.append("non-debuggable")
             else:
@@ -108,7 +119,7 @@ class ApiSvr(AsyncRunMixin):
                 item = []
                 item.append(resource)
                 item.append(Config.managed_resources_farm_types.get(resource, ""))
-                item.append(status)
+                item.append(ApiSvr.friendly_status(status))
                 if resource not in labgrid_managed_resources:
                     item.append("non-debuggable")
                 else:
