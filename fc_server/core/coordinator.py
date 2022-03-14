@@ -160,7 +160,9 @@ class Coordinator:
         """
 
         logging.info(
-            "Seize resource requirement from %s", context.__module__.split(".")[-1]
+            "Seize resource requirement from %s for %s",
+            context.__module__.split(".")[-1],
+            job_id,
         )
 
         candidated_seized_resources = [
