@@ -129,7 +129,7 @@ class Plugin(FCPlugin, AsyncRunMixin):
             job_info = yaml.load(job_info_text, Loader=yaml.FullLoader)
         except yaml.YAMLError:
             logging.error(traceback.format_exc())
-            return job_id, []
+            return
 
         return job_id, job_info["tags"]
 
@@ -141,7 +141,7 @@ class Plugin(FCPlugin, AsyncRunMixin):
             device_info = yaml.load(device_info_text, Loader=yaml.FullLoader)
         except yaml.YAMLError:
             logging.error(traceback.format_exc())
-            return device, []
+            return
 
         return device, device_info["tags"]
 
@@ -175,6 +175,9 @@ class Plugin(FCPlugin, AsyncRunMixin):
                 self.__get_device_tags(candidated_non_available_device)
                 for candidated_non_available_device in candidated_non_available_devices
             ]
+        )
+        non_available_device_tags_list = filter(
+            lambda _: isinstance(_, tuple), non_available_device_tags_list
         )
         non_available_device_tags_dict = dict(non_available_device_tags_list)
 
@@ -309,16 +312,22 @@ class Plugin(FCPlugin, AsyncRunMixin):
                 if queued_job["id"] not in self.job_tags_cache
             ]
         )
+        job_tags_list = filter(lambda _: isinstance(_, tuple), job_tags_list)
         self.job_tags_cache.update(dict(job_tags_list))
 
         # get devices suitable for queued jobs
         queued_jobs.reverse()
         for queued_job in queued_jobs:
+            job_id = queued_job["id"]
+
+            # delay issue job to next scheduling slot
+            if job_id not in self.job_tags_cache:
+                logging.warning("Job %s delayed to next scheduling slot", job_id)
+                continue
+
             candidated_available_devices = managed_resources_category["available"].get(
                 queued_job["requested_device_type"], []
             )
-
-            job_id = queued_job["id"]
 
             candidated_available_resources = []
 
@@ -331,6 +340,9 @@ class Plugin(FCPlugin, AsyncRunMixin):
                     for candidated_available_device in candidated_available_devices
                     if candidated_available_device not in self.scheduler_cache[job_id]
                 ]
+            )
+            available_device_tags_list = filter(
+                lambda _: isinstance(_, tuple), available_device_tags_list
             )
             available_device_tags_dict = dict(available_device_tags_list)
 
