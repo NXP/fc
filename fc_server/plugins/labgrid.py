@@ -141,11 +141,12 @@ class Plugin(FCPlugin, AsyncRunMixin):
         Request coordinator to seize low priority resource
         """
 
-        priority_resources = await driver.coordinate_resources(
-            self, job_id, *candidated_resources
-        )
-        if priority_resources:
-            self.__update_cache("seize_cache", job_id, priority_resources)
+        if candidated_resources:
+            priority_resources = await driver.coordinate_resources(
+                self, job_id, *candidated_resources
+            )
+            if priority_resources:
+                self.__update_cache("seize_cache", job_id, priority_resources)
 
     async def schedule(self, driver):
         """
