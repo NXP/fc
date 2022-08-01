@@ -91,9 +91,11 @@ if PKG == "fc-server":
         },
         install_requires=[
             "aiohttp==3.7.4.post0",
+            "async-lru==1.0.3",
             "flatdict==4.0.1",
             "lavacli==1.2",
             "labgrid==0.4.1",
+            "singledispatchmethod==1.0",
             LABGRID_PYSERIAL_FIX,
         ],
     )
