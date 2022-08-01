@@ -24,27 +24,30 @@
 
 import asyncio
 import logging
-import traceback
-import yaml
+
+from async_lru import alru_cache
 
 from fc_server.core.decorators import (
     check_priority_scheduler,
     check_seize_strategy,
     safe_cache,
 )
-from fc_server.core import AsyncRunMixin
 from fc_server.core.plugin import FCPlugin
+from fc_server.plugins.utils.lava import Lava
 
 
-class Plugin(FCPlugin, AsyncRunMixin):
+class Plugin(FCPlugin, Lava):
     """
     Plugin for [lava framework](https://git.lavasoftware.org/lava/lava)
     """
 
+    # pylint: disable=too-many-instance-attributes
+
     def __init__(self, frameworks_config):
         super().__init__()
-        self.schedule_interval = 30  # poll lava job queues every 30 seconds
+
         self.identities = frameworks_config["identities"]  # lavacli identities
+        self.schedule_interval = 30  # poll lava job queues every 30 seconds
         accurate_scheduler_criteria = frameworks_config.get(
             "accurate_scheduler_criteria", None
         )
@@ -57,6 +60,9 @@ class Plugin(FCPlugin, AsyncRunMixin):
         self.scheduler_cache = {}  # cache to avoid busy scheduling
         self.seize_cache = {}  # cache to avoid busy seize
         self.job_tags_cache = {}  # cache to store job tags
+
+        self.device_description_prefix = "[FC]"
+        self.lava_default_description = "Created automatically by LAVA."
 
     @safe_cache
     def __update_cache(self, cache_name, job_id, value):
@@ -71,22 +77,15 @@ class Plugin(FCPlugin, AsyncRunMixin):
         # let lava scheduler schedule 90 seconds, then do corresponding cleanup
         await asyncio.sleep(90)
 
-        for resource in possible_resources:
-            logging.info("Maintenance: %s", resource)
-            cmd = (
-                f"lavacli -i {self.identities} devices update --health MAINTENANCE %s"
-                % (resource)
-            )
-            await self._run_cmd(cmd)
+        if not driver.is_default_framework(self):
+            await self.lava_maintenance_devices(*possible_resources)
 
         freed_possible_resources = []
 
         # check if possible resource still be used by lava
         while True:  # pylint: disable=too-many-nested-blocks
-            cmd = f"lavacli -i {self.identities} devices list --yaml"
-            _, devices_text, _ = await self._run_cmd(cmd)
-            try:
-                devices = yaml.load(devices_text, Loader=yaml.FullLoader)
+            devices = await self.lava_get_devices()
+            if devices:
                 used_possible_resources = [
                     device
                     for device in devices
@@ -99,7 +98,7 @@ class Plugin(FCPlugin, AsyncRunMixin):
 
                 for info in used_possible_resources:
                     if not info["current_job"]:
-                        driver.return_resource(info["hostname"])
+                        await driver.return_resource(info["hostname"])
                         freed_possible_resources.append(info["hostname"])
 
                         # clean cache for returned device
@@ -109,61 +108,66 @@ class Plugin(FCPlugin, AsyncRunMixin):
                         for job_id in list(self.seize_cache.keys()):
                             if info["hostname"] in self.seize_cache[job_id]:
                                 del self.seize_cache[job_id]
-            except yaml.YAMLError:
-                logging.error(traceback.format_exc())
             await asyncio.sleep(60)
 
-    async def __lava_init(self, resource):
-        """
-        Let FC take over by maintenance lava device
-        """
-
-        cmd = f"lavacli -i {self.identities} devices update --health MAINTENANCE {resource}"
-        await self._run_cmd(cmd)
-
     async def __get_job_tags(self, job_id):
-        cmd = f"lavacli -i {self.identities} jobs show {job_id} --yaml"
-        _, job_info_text, _ = await self._run_cmd(cmd)
+        """
+        Return job tag info, issue interface call will return None
+        """
 
-        try:
-            job_info = yaml.load(job_info_text, Loader=yaml.FullLoader)
-        except yaml.YAMLError:
-            logging.error(traceback.format_exc())
-            return
-
-        return job_id, job_info["tags"]
+        job_info = await self.lava_get_job_info(job_id)
+        return job_id, job_info["tags"] if job_info else None
 
     async def __get_device_tags(self, device):
-        cmd = f"lavacli -i {self.identities} devices show {device} --yaml"
-        _, device_info_text, _ = await self._run_cmd(cmd)
+        """
+        Return device tag info, issue interface call will return None
+        """
 
-        try:
-            device_info = yaml.load(device_info_text, Loader=yaml.FullLoader)
-        except yaml.YAMLError:
-            logging.error(traceback.format_exc())
-            return
+        device_info = await self.lava_get_device_info(device)
+        return device, device_info["tags"] if device_info else None
 
-        return device, device_info["tags"]
+    async def __get_device_info(self, device, clear=False):
+        """
+        Configureable wrapper of lava_get_device_info to clean cache
+        """
+
+        if clear:
+            self.__get_cached_device_info.cache_clear()  # pylint: disable=no-member
+
+        return await self.__get_cached_device_info(device)
+
+    @alru_cache(None)
+    async def __get_cached_device_info(self, device):
+        """
+        Cached wrapper of lava_get_device_info
+        """
+
+        return await self.lava_get_device_info(device)
+
+    async def __get_device_description(self, device):
+        """
+        Return device description, issue interface call will return None
+        """
+
+        device_info = await self.__get_device_info(device)
+        return (
+            device_info["description"] if device_info else self.lava_default_description
+        )
 
     async def force_kick_off(self, resource):
         """
         Allow coordinator to seize lava resource
         """
 
-        cmd = f"lavacli -i {self.identities} devices show {resource} --yaml"
-        _, device_info_text, _ = await self._run_cmd(cmd)
+        device_info = await self.lava_get_device_info(resource)
 
-        try:
-            device_info = yaml.load(device_info_text, Loader=yaml.FullLoader)
-        except yaml.YAMLError:
-            logging.error(traceback.format_exc())
+        if not device_info:
             return
 
         current_job = device_info["current_job"]
 
         if current_job:
-            cmd = f"lavacli -i {self.identities} jobs cancel {current_job}"
-            await self._run_cmd(cmd)
+            await self.lava_cancel_job(current_job)
 
     async def __seize_resource(self, driver, job_id, candidated_non_available_devices):
         """
@@ -195,6 +199,45 @@ class Plugin(FCPlugin, AsyncRunMixin):
             if priority_resources:
                 self.__update_cache("seize_cache", job_id, priority_resources)
 
+    async def default_framework_disconnect(self, resource):
+        """
+        Default framework should realize this to let FC control the disconnect
+        """
+
+        device_info = await self.__get_device_info(resource, clear=True)
+        if not device_info or device_info["current_job"]:
+            return False, False
+
+        if device_info["health"] == "Maintenance":
+            logging.info("%s default in maintenance.", resource)
+            return True, False
+
+        # ask default framework disconnect this resource
+        logging.info("Disconnect %s from default framework", resource)
+        desc = await self.__get_device_description(resource)
+        if not await self.lava_maintenance_devices(
+            resource, desc=f"{self.device_description_prefix}{desc}"
+        ):
+            return False, False
+
+        device_info = await self.__get_device_info(resource, clear=True)
+        if not device_info or device_info["current_job"]:
+            return False, True
+
+        return True, True
+
+    async def default_framework_connect(self, resource):
+        """
+        Default framework should realize this to let FC control the connect
+        """
+
+        # ask default framework connect this resource
+        logging.info("Connect %s to default framework", resource)
+        desc = await self.__get_device_description(resource)
+        return await self.lava_online_devices(
+            resource, desc=desc.split(self.device_description_prefix)[-1]
+        )
+
     async def schedule(
         self, driver
     ):  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
@@ -204,36 +247,32 @@ class Plugin(FCPlugin, AsyncRunMixin):
         Coodinator will call this function periodly
         """
 
-        cmd = f"lavacli -i {self.identities} devices list --yaml"
-        _, devices_text, _ = await self._run_cmd(cmd)
-
-        try:
-            managed_resources_category = {"available": {}, "non-available": {}}
-            devices = yaml.load(devices_text, Loader=yaml.FullLoader)
-
-            cmd_list = []
+        async def schedule_prepare():
             for device in devices:
                 if device["hostname"] in driver.managed_resources and device[
                     "health"
-                ] in ("Maintenance", "Unknown", "Good", "Bad"):
-                    # assure all managed devices in maintenance mode
-                    if (
-                        device["health"]
-                        in (
+                ] in (
+                    ("Maintenance", "Unknown", "Good", "Bad")
+                    if not driver.is_default_framework(self)
+                    else (
+                        ("Unknown", "Good", "Maintenance")
+                        if driver.managed_disconnect_resource(device["hostname"])
+                        else ("Unknown", "Good")
+                    )
+                ):
+                    if not driver.is_default_framework(self):
+                        # yield resource which should assure in maintenance mode
+                        if device["health"] in (
                             "Unknown",
                             "Good",
                             "Bad",
-                        )
-                        and driver.is_resource_available(self, device["hostname"])
-                    ):
-                        cmd = (
-                            f"lavacli -i {self.identities} "
-                            f"devices update --health MAINTENANCE {device['hostname']}"
-                        )
-                        cmd_list.append(cmd)
+                        ) and await driver.is_resource_available(
+                            self, device["hostname"]
+                        ):
+                            yield device["hostname"]
 
                     # guard behavior: in case there are some unexpected manual online & jobs there
-                    if device["current_job"] and driver.is_resource_available(
+                    if device["current_job"] and await driver.is_resource_available(
                         self, device["hostname"]
                     ):
                         driver.accept_resource(device["hostname"], self)
@@ -244,7 +283,7 @@ class Plugin(FCPlugin, AsyncRunMixin):
                         )
 
                     # category devices by devicetypes as LAVA schedule based on devicetypes
-                    if driver.is_resource_available(self, device["hostname"]):
+                    if await driver.is_resource_available(self, device["hostname"]):
                         category_key = "available"
                     elif driver.is_resource_non_available(device["hostname"]):
                         category_key = "non-available"
@@ -258,46 +297,19 @@ class Plugin(FCPlugin, AsyncRunMixin):
                             device["hostname"]
                         ]
 
-            await asyncio.gather(*[self._run_cmd(cmd) for cmd in cmd_list])
-        except yaml.YAMLError:
-            logging.error(traceback.format_exc())
+        # category devices
+        managed_resources_category = {"available": {}, "non-available": {}}
+        devices = await self.lava_get_devices()
+
+        if driver.is_default_framework(self):
+            async for _ in schedule_prepare():
+                pass
+        else:
+            await self.lava_maintenance_devices(schedule_prepare())
 
         # query job queue
         possible_resources = []
-
-        queued_jobs = []
-        seq = 0
-        while True:
-            cmd_list = []
-            batch_num = 5
-            jobs_per_batch = 100
-            for cnt in range(batch_num):
-                cmd = (
-                    f"lavacli -i {self.identities} jobs queue "
-                    f"--start={batch_num * jobs_per_batch * seq + cnt * jobs_per_batch} "
-                    f"--limit={jobs_per_batch} --yaml"
-                )
-                cmd_list.append(cmd)
-
-            queued_jobs_infos = await asyncio.gather(
-                *[self._run_cmd(cmd) for cmd in cmd_list]
-            )
-
-            one_batch_queued_jobs = []
-            for queued_jobs_info in queued_jobs_infos:
-                try:
-                    one_batch_queued_jobs += yaml.load(
-                        queued_jobs_info[1], Loader=yaml.FullLoader
-                    )
-                except yaml.YAMLError:
-                    logging.error(traceback.format_exc())
-
-            queued_jobs += one_batch_queued_jobs
-
-            if len(one_batch_queued_jobs) < batch_num * jobs_per_batch:
-                break
-
-            seq += 1
+        queued_jobs = await self.lava_get_queued_jobs()
 
         # clean cache to save memory
         queued_jobs_ids = [queued_job["id"] for queued_job in queued_jobs]
@@ -371,6 +383,7 @@ class Plugin(FCPlugin, AsyncRunMixin):
                     ].get(queued_job["requested_device_type"], [])
                     if non_available_device not in self.seize_cache[job_id]
                 ]
+
                 if (
                     not candidated_available_resources
                     and not driver.is_seized_job(job_id)
@@ -389,19 +402,12 @@ class Plugin(FCPlugin, AsyncRunMixin):
 
         # let lava dispatch
         if possible_resources:
-            logging.info("Online devices to schedule lava jobs.")
             for possible_resource in possible_resources:
                 driver.accept_resource(possible_resource, self)
 
-            await asyncio.gather(
-                *[
-                    self._run_cmd(
-                        f"lavacli -i {self.identities} "
-                        f"devices update --health GOOD {possible_resource}"
-                    )
-                    for possible_resource in possible_resources
-                ]
-            )
+            if not driver.is_default_framework(self):
+                logging.info("Online devices to schedule lava jobs.")
+                await self.lava_online_devices(*possible_resources)
 
             # cleanup
             asyncio.create_task(
@@ -410,21 +416,34 @@ class Plugin(FCPlugin, AsyncRunMixin):
 
     async def init(self, driver):
         """
-        Generate and return tasks to let fc own specified lava devices
-        This be called only once when coordinator start
+        Generate and return tasks to let fc own specified lava devices correctly
+        Called only once when coordinator start
         """
 
-        candidate_managed_resources = []
+        if driver.is_default_framework(self):
+            maintenance_devices = [
+                device["hostname"]
+                for device in await self.lava_get_devices()
+                if device["hostname"] in driver.managed_resources
+                and device["health"] in ("Maintenance",)
+            ]
+            recover_devices = [
+                (device, await self.__get_device_description(device))
+                for device in maintenance_devices
+                if (await self.__get_device_description(device)).startswith(
+                    self.device_description_prefix
+                )
+            ]
+            return [
+                self.lava_online_devices(
+                    device, desc=desc.split(self.device_description_prefix)[-1]
+                )
+                for device, desc in recover_devices
+            ]
 
-        cmd = f"lavacli -i {self.identities} devices list --yaml"
-        _, devices_text, _ = await self._run_cmd(cmd)
-        try:
-            devices = yaml.load(devices_text, Loader=yaml.FullLoader)
-            for device in devices:
-                if device["hostname"] in driver.managed_resources:
-                    if device["health"] in ("Unknown", "Good", "Bad"):
-                        candidate_managed_resources.append(device["hostname"])
-        except yaml.YAMLError:
-            logging.error(traceback.format_exc())
-
-        return [self.__lava_init(resource) for resource in candidate_managed_resources]
+        return [
+            self.lava_maintenance_devices(device["hostname"])
+            for device in await self.lava_get_devices()
+            if device["hostname"] in driver.managed_resources
+            and device["health"] in ("Unknown", "Good", "Bad")
+        ]

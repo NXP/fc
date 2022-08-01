@@ -25,19 +25,17 @@
 import asyncio
 import logging
 import os
-import traceback
-import yaml
 from fc_server.core.decorators import (
     check_priority_scheduler,
     check_seize_strategy,
     safe_cache,
 )
 
-from fc_server.core import AsyncRunMixin
 from fc_server.core.plugin import FCPlugin
+from fc_server.plugins.utils.labgrid import Labgrid
 
 
-class Plugin(FCPlugin, AsyncRunMixin):
+class Plugin(FCPlugin, Labgrid):
     """
     Plugin for [labgrid framework](https://github.com/labgrid-project/labgrid)
     """
@@ -60,10 +58,7 @@ class Plugin(FCPlugin, AsyncRunMixin):
 
     async def __labgrid_guard_reservation(self, resource):
         logging.info("* [start] inject guard reservation for %s", resource)
-
-        cmd = f"labgrid-client reserve --prio -100 name={resource}"
-        await self._run_cmd(cmd)
-
+        await self.labgrid_create_reservation(resource, priority=-100)
         logging.info("* [done] inject guard reservation for %s", resource)
 
     async def __labgrid_fc_reservation(self, driver, resource):
@@ -71,70 +66,44 @@ class Plugin(FCPlugin, AsyncRunMixin):
         await asyncio.sleep(10)
 
         logging.info("* [start] inject fc reservation for %s", resource)
-
-        cmd = f"labgrid-client reserve --wait --prio 100 name={resource}"
-        await self._run_cmd(cmd)
-
-        cmd = f"labgrid-client -p {resource} acquire"
-        await self._run_cmd(cmd)
-
+        await self.labgrid_create_reservation(resource, priority=100, wait=True)
+        await self.labgrid_acquire_place(resource)
         logging.info("* [done] inject fc reservation for %s", resource)
 
-        driver.return_resource(resource)
+        await driver.return_resource(resource)
 
     async def __labgrid_init(self, resource):
         """
         Let FC take over by inject special reservation
         """
-        _, reservations_text, _ = await self._run_cmd("labgrid-client reservations")
-        try:
-            reservations = yaml.load(reservations_text, Loader=yaml.FullLoader)
-            if reservations:
-                for _, v in reservations.items():  # pylint: disable=invalid-name
-                    if v["filters"]["main"] == f"name={resource}":
-                        cmd = f"labgrid-client cancel-reservation {v['token']} > /dev/null 2>&1"
-                        await self._run_cmd(cmd)
-        except yaml.YAMLError:
-            logging.error(traceback.format_exc())
+        reservations = await self.labgrid_get_reservations()
+        if reservations:
+            for _, v in reservations.items():  # pylint: disable=invalid-name
+                if v["filters"]["main"] == f"name={resource}":
+                    await self.labgrid_cancel_reservation(v["token"], quiet=True)
 
-        cmd = f"labgrid-client -p {resource} release -k > /dev/null 2>&1"
-        await self._run_cmd(cmd)
-
-        cmd = f"timeout 20 labgrid-client reserve --wait --prio 100 name={resource}"
-        await self._run_cmd(cmd)
-
-        cmd = f"labgrid-client -p {resource} acquire"
-        await self._run_cmd(cmd)
+        await self.labgrid_release_place(resource, force=True, quiet=True)
+        await self.labgrid_create_reservation(
+            resource, priority=100, wait=True, timeout=20
+        )
+        await self.labgrid_acquire_place(resource)
 
     async def force_kick_off(self, resource):
         """
         Allow coordinator to seize labgrid resource
         """
 
-        cmd = f"labgrid-client -p {resource} show"
-        _, place_info_text, _ = await self._run_cmd(cmd)
-
-        token = ""
-        place_info_lines = place_info_text.splitlines()
-        for line in place_info_lines:
-            if line.find("reservation") >= 0:
-                token = line.split(":")[-1].strip()
-                break
+        token = await self.labgrid_get_place_token(resource)
 
         if token:
-            cmd = "labgrid-client reservations"
-            _, reservations_text, _ = await self._run_cmd(cmd)
-            try:
-                reservations = yaml.load(reservations_text, Loader=yaml.FullLoader)
-            except yaml.YAMLError:
-                logging.error(traceback.format_exc())
-                return
+            reservations = await self.labgrid_get_reservations()
 
-            for reservation in reservations.keys():
-                if reservation == f"Reservation '{token}'":
-                    await self._run_cmd(f"labgrid-client cancel-reservation {token}")
-                    await self._run_cmd(f"labgrid-client -p {resource} unlock -k")
-                    break
+            if reservations:
+                for reservation in reservations.keys():
+                    if reservation == f"Reservation '{token}'":
+                        await self.labgrid_cancel_reservation(token)
+                        await self.labgrid_release_place(resource, True)
+                        break
 
     async def __seize_resource(self, driver, job_id, candidated_resources):
         """
@@ -161,10 +130,8 @@ class Plugin(FCPlugin, AsyncRunMixin):
             # inject a low priority system reservation
             await self.__labgrid_guard_reservation(resource)
 
-            cmd = f"labgrid-client cancel-reservation {managed_resources_tokens[resource]}"
-            await self._run_cmd(cmd)
-            cmd = f"labgrid-client -p {resource} release"
-            await self._run_cmd(cmd)
+            await self.labgrid_cancel_reservation(managed_resources_tokens[resource])
+            await self.labgrid_release_place(resource)
 
             # inject a high priority system reservation to let FC lock the device
             # after normal user finish using the device
@@ -172,72 +139,67 @@ class Plugin(FCPlugin, AsyncRunMixin):
 
         # query labgrid reservations
         managed_resources_tokens = {}
-        cmd = "labgrid-client reservations"
-        _, reservations_text, _ = await self._run_cmd(cmd)
-        try:  # pylint: disable=too-many-nested-blocks
-            reservations = yaml.load(reservations_text, Loader=yaml.FullLoader)
-            if reservations:
-                for _, v in reservations.items():  # pylint: disable=invalid-name
-                    resource = v["filters"]["main"][5:]
-                    if v["owner"] == "fc/fc" and v["state"] == "acquired":
-                        managed_resources_tokens[resource] = v["token"]
+        reservations = await self.labgrid_get_reservations()
+        if reservations:
+            for _, v in reservations.items():  # pylint: disable=invalid-name
+                resource = v["filters"]["main"][5:]
+                if v["owner"] == "fc/fc" and v["state"] == "acquired":
+                    managed_resources_tokens[resource] = v["token"]
 
-                resource_list = []
-                for _, v in reservations.items():  # pylint: disable=invalid-name
-                    resource = v["filters"]["main"][5:]
-                    if v["owner"] != "fc/fc" and v["state"] == "waiting":
-                        if driver.is_resource_available(self, resource):
-                            if driver.is_seized_resource(self, resource):
-                                driver.clear_seized_job_records(resource)
+            resource_list = []
+            for _, v in reservations.items():  # pylint: disable=invalid-name
+                resource = v["filters"]["main"][5:]
+                if v["owner"] != "fc/fc" and v["state"] == "waiting":
+                    if await driver.is_resource_available(self, resource):
+                        if driver.is_seized_resource(self, resource):
+                            driver.clear_seized_job_records(resource)
 
-                            # if has pending reservation not belongs to normal user
-                            # meanwhile device currently belongs to fc, accept it
-                            driver.accept_resource(resource, self)
-                            resource_list.append(resource)
-                        else:
-                            job_id = v["token"]
+                        # if has pending reservation not belongs to normal user
+                        # meanwhile device currently belongs to fc, accept it
+                        driver.accept_resource(resource, self)
+                        resource_list.append(resource)
+                    else:
+                        job_id = v["token"]
 
-                            # pylint: disable=cell-var-from-loop
-                            @check_priority_scheduler(driver)
-                            @check_seize_strategy(driver, self)
-                            @safe_cache
-                            def labgrid_seize_resource(*_):
-                                candidated_resources = (
-                                    []
-                                    if resource in self.seize_cache[job_id]
-                                    else [resource]
+                        # pylint: disable=cell-var-from-loop
+                        @check_priority_scheduler(driver)
+                        @check_seize_strategy(driver, self)
+                        @safe_cache
+                        def labgrid_seize_resource(*_):
+                            candidated_resources = (
+                                []
+                                if resource in self.seize_cache[job_id]
+                                else [resource]
+                            )
+
+                            if (
+                                not driver.is_seized_job(job_id)
+                                and candidated_resources
+                            ):
+                                # no available resource found, try to seize from other framework
+                                asyncio.create_task(
+                                    self.__seize_resource(
+                                        driver, job_id, candidated_resources
+                                    )
                                 )
 
-                                if (
-                                    not driver.is_seized_job(job_id)
-                                    and candidated_resources
-                                ):
-                                    # no available resource found, try to seize from other framework
-                                    asyncio.create_task(
-                                        self.__seize_resource(
-                                            driver, job_id, candidated_resources
-                                        )
-                                    )
+                        labgrid_seize_resource(self, "seize_cache", job_id)
 
-                            labgrid_seize_resource(self, "seize_cache", job_id)
-
-                if resource_list:
-                    asyncio.gather(
-                        *[
-                            switch_from_fc_to_labgrid(resource)
-                            for resource in set(resource_list)
-                        ]
-                    )
-        except yaml.YAMLError:
-            logging.error(traceback.format_exc())
+            if resource_list:
+                await asyncio.gather(
+                    *[
+                        switch_from_fc_to_labgrid(resource)
+                        for resource in set(resource_list)
+                    ]
+                )
 
     async def init(self, driver):
         """
         Generate and return tasks to let fc own specified labgrid devices
         This be called only once when coordinator start
         """
-        cmd = "labgrid-client p"
-        _, places, _ = await self._run_cmd(cmd)
+
+        places = await self.labgrid_get_places()
         self.managed_resources = [
             place.strip()
             for place in places.splitlines()

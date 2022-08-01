@@ -24,6 +24,7 @@
 
 import asyncio
 import logging
+import sys
 
 from importlib import import_module
 from fc_server.core.api_svr import ApiSvr
@@ -35,6 +36,8 @@ class Coordinator:
     """
     FC coordinator which used to coordinate status among different frameworks
     """
+
+    # pylint: disable=too-many-instance-attributes
 
     def __init__(self):
         self.__framework_plugins = [
@@ -54,7 +57,39 @@ class Coordinator:
             for framework in Config.registered_frameworks
         }
 
+        default_framework_strategies = [
+            framework
+            for framework in Config.registered_frameworks
+            if Config.frameworks_config[framework].get("default", False)
+        ]
+        default_framework_number = len(default_framework_strategies)
+        if default_framework_number > 1:
+            logging.fatal("Fatal: at most one default framework could be specifed!")
+            sys.exit(1)
+        self.__default_framework = (
+            None if default_framework_number == 0 else default_framework_strategies[0]
+        )
+        if self.__default_framework:
+            logging.info("Default framework: %s", self.__default_framework)
+            for framework in self.__framework_plugins:
+                if framework.__module__.split(".")[-1] == self.__default_framework:
+                    self.__default_framework_plugin = framework
+                    if not hasattr(
+                        self.__default_framework_plugin, "default_framework_disconnect"
+                    ) or not hasattr(
+                        self.__default_framework_plugin, "default_framework_connect"
+                    ):
+                        logging.fatal(
+                            "Fatal: specified default framework doesn't realize next interfaces:"
+                        )
+                        logging.fatal("  - default_framework_disconnect")
+                        logging.fatal("  - default_framework_connect")
+                        sys.exit(1)
+                    break
+
         self.__managed_resources_status = {}
+        self.__managed_disconnect_resources = []
+        self.__managed_issue_disconnect_resources = []
 
         for resource in Config.managed_resources:
             self.__managed_resources_status[resource] = "fc"
@@ -77,9 +112,19 @@ class Coordinator:
 
         logging.info("Framework coordinator ready.")
 
+    async def __managed_issue_resources_connect(self):
+        for resource in self.__managed_issue_disconnect_resources:
+            if await self.__default_framework_plugin.default_framework_connect(
+                resource
+            ):
+                self.__managed_issue_disconnect_resources.remove(resource)
+
     async def __schedule_frameworks(self):
-        # loop to schedule different frameworks
         while True:
+            # connect all resources which disconnect by fc but previously not successful connect
+            await self.__managed_issue_resources_connect()
+
+            # schedule different frameworks
             for framework in self.__framework_plugins:
                 if framework.schedule_tick % framework.schedule_interval == 0:
                     framework.schedule_tick = 0
@@ -113,6 +158,12 @@ class Coordinator:
     def framework_seize_strategies(self):
         return self.__framework_seize_strategies
 
+    def managed_disconnect_resource(self, resource):
+        return resource in self.__managed_disconnect_resources
+
+    def is_default_framework(self, context):
+        return context.__module__.split(".")[-1] == self.__default_framework
+
     def __get_low_priority_frameworks(self, cur_framework):
         """
         Get all frameworks with low priority compared to current framework
@@ -125,11 +176,36 @@ class Coordinator:
             > self.__framework_priorities[cur_framework]
         ]
 
-    def is_resource_available(self, context, resource):
-        return self.__managed_resources_status.get(resource, "") in (
-            "fc",
-            context.__module__.split(".")[-1] + "_seized",
-        )
+    async def is_resource_available(self, context, resource):
+        if self.__managed_resources_status.get(resource, "") == "fc":
+            if self.__default_framework:
+                if context.__module__.split(".")[-1] == self.__default_framework:
+                    return True
+
+                (
+                    disconnect_success,
+                    maintenance_by_fc,
+                ) = await self.__default_framework_plugin.default_framework_disconnect(
+                    resource
+                )
+
+                if maintenance_by_fc:
+                    if disconnect_success:
+                        self.__managed_disconnect_resources.append(resource)
+                    else:
+                        # delay default framework connect if api call failure
+                        self.__managed_issue_disconnect_resources.append(resource)
+                return disconnect_success
+
+            return True
+
+        if (
+            self.__managed_resources_status.get(resource, "")
+            == context.__module__.split(".")[-1] + "_seized"
+        ):
+            return True
+
+        return False
 
     def is_resource_non_available(self, resource):
         return (
@@ -163,7 +239,7 @@ class Coordinator:
             return []
 
         logging.info(
-            "Seize resource requirement from %s for %s",
+            "[start] seize resource requirement from %s for %s",
             context.__module__.split(".")[-1],
             job_id,
         )
@@ -205,18 +281,33 @@ class Coordinator:
                     break
             low_priority_resources.append(candidated_seized_resource)
 
+        logging.info(
+            "[done] seize resource requirement from %s for %s",
+            context.__module__.split(".")[-1],
+            job_id,
+        )
+
         return high_priority_resources + low_priority_resources
 
     def __set_resource_status(self, resource, status):
         self.__managed_resources_status[resource] = status
         logging.info("* %s now belongs to %s", resource, status)
 
-    def return_resource(self, resource):
+    async def return_resource(self, resource):
         if (
             self.__managed_resources_status.get(resource, "")
             in Config.registered_frameworks
         ):
             self.__set_resource_status(resource, "fc")
+
+        if self.__default_framework and resource in self.__managed_disconnect_resources:
+            # restore default framework resource status
+            self.__managed_disconnect_resources.remove(resource)
+            if not await self.__default_framework_plugin.default_framework_connect(
+                resource
+            ):
+                # delay default framework connect for this resource if connect api call failure
+                self.__managed_issue_disconnect_resources.append(resource)
 
     def accept_resource(self, resource, context):
         self.__set_resource_status(resource, context.__module__.split(".")[-1])

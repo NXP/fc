@@ -23,6 +23,7 @@
 
 
 import asyncio
+import logging
 from functools import wraps
 
 
@@ -74,3 +75,21 @@ def check_seize_strategy(*decorator_args):
         return decorator
 
     return wrapper
+
+
+def verify_cmd_results(func):
+    @wraps(func)
+    async def decorator(*args, desc=None):
+        results, cmd_list = await func(*args, desc=desc)
+
+        i = 0
+        for result in results:
+            device_update_response = result[1]
+            if device_update_response != "":
+                logging.error(cmd_list[i])
+                logging.error(device_update_response)
+                return False
+            i += 1
+        return True
+
+    return decorator

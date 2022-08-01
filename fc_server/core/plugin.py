@@ -21,22 +21,28 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+from abc import ABC, abstractmethod
 
-class FCPlugin:
+
+class FCPlugin(ABC):
     """
     Base plugin of FC
-    Detail framework plugins should realize `init`, `schedule` interfaces
+    Detail framework plugins should realize next interfaces
+    `init`, `schedule`, `force_kick_off`
     """
 
     def __init__(self):
         self.schedule_tick = 0
         self.schedule_interval = 1
 
+    @abstractmethod
     async def init(self, driver):
-        raise NotImplementedError(f"Define in the subclass: {self}")
+        pass
 
+    @abstractmethod
     async def schedule(self, driver):
-        raise NotImplementedError(f"Define in the subclass: {self}")
+        pass
 
+    @abstractmethod
     async def force_kick_off(self, resource):
-        raise NotImplementedError(f"Define in the subclass: {self}")
+        pass
