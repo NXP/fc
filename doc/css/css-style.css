@@ -1,0 +1,7 @@
+body{
+    font-family:"Times New Roman", "Arial", Helvetica, sans-serif;
+}
+
+.wy-side-nav-search .wy-dropdown>a img.logo, .wy-side-nav-search>a img.logo {
+    max-width: 60%;
+}

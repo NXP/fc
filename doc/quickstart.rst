@@ -28,7 +28,7 @@ FC could be installed by ``pip``.
 
   $ sudo pip3 install fc-guarder
 
-Additional, you can also use FC using docker, details see :ref:`Run with docker package`.
+Additional, you can also use FC with docker, details see :ref:`Run with docker package`.
 
 Run
 ---
@@ -76,7 +76,7 @@ Run with docker package
 
 .. code-block:: console
 
-  $ git clone https://github.com/frameworkcoordinator/fc.git
+  $ git clone https://github.com/NXPMicro/fc.git
   $ cd fc/docker/fc_server
   $ docker-compose up -d
 
@@ -100,6 +100,6 @@ Run with docker package
 
 .. code-block:: console
 
-  $ git clone https://github.com/frameworkcoordinator/fc.git
+  $ git clone https://github.com/NXPMicro/fc.git
   $ cd fc/docker/fc_guarder
   $ docker-compose up -d

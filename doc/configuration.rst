@@ -6,7 +6,7 @@ Three ``FC`` components require different configurations.
 fc-server
 ---------
 
-(I) fc/fc_server/config/cfg.yaml
+**1. fc/fc_server/config/cfg.yaml**
 
 .. code-block:: yaml
 
@@ -18,6 +18,7 @@ fc-server
     lava:
       identities: $lava_identity
       priority: 1
+      default: true
     labgrid:
       lg_crossbar: ws://$labgrid_crossbar_ip:20408/ws
       priority: 2
@@ -42,6 +43,13 @@ You should replace the parameters with ``$`` symbol:
 * ``$device_type``: this category devices for easy readness, you could use any string
 * ``$resource``: list all your resources here
 
+Some optional configure:
+
+* ``priority_scheduler``: priority scheduler only starts to work when it set as `true`
+* ``priority``: should specify different priorities for priority scheduler, the lower number will have high priority
+* ``seize``: if enable priority scheduler, all frameworks will try to seize the resource from lower priority framework, we could disable that by set `seize` as `false`
+* ``default``: the framework will be treated as default framework if specified as `true`
+
 .. note::
 
   The api server defaults will return ``Resource``, ``Farm``, ``Owner``, ``Comment`` totally four columns to ``fc-client``, but you possible to call external tool to return one more ``Info`` column to client.
@@ -55,7 +63,7 @@ You should replace the parameters with ``$`` symbol:
 
   The ``$fc_farm_type``, ``$fc_resource`` will automatically replaced by real value of resource in FC, your own ``fetch_info.py`` could optional to use them.
 
-(II) fc/fc_server/config/lavacli.yaml
+**2. fc/fc_server/config/lavacli.yaml**
 
 You should see it in ``$HOME/.config/lavacli.yaml`` if you once add identities for lavacli, see `this <https://validation.linaro.org/static/docs/v2/lavacli.html?highlight=lavacli#using-lavacli>`_
 

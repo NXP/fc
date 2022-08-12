@@ -1,6 +1,3 @@
-Welcome to FC's documentation!
-==============================
-
 What is FC?
 -----------
 
@@ -23,7 +20,7 @@ There are many different systems in embedded test community, see `this <https://
 
 Let's take a look at why FC is useful by going back in time.
 
-  .. image:: images/era.svg
+.. image:: doc/images/era.svg
 
 * **Traditional deployment era:** Early on, as nearly all above systems require dedicated control of the board resources, organizations have to
   afford multiple series of hardware to meet the requirements of different frameworks, which leads to resource waste when leverage different systems.
@@ -49,16 +46,5 @@ FC is designed as a plugin system to support different frameworks, it currently 
 
 But, it not limits to above two, you could write your own plugins to support other framework.
 
-Check out the :doc:`overview` section for further information, also go to :ref:`installation` for how to install this project.
+For more detail, move your steps to `FC home page <https://fc.readthedocs.org/>`_.
 
-Contents
---------
-
-.. toctree::
-   :maxdepth: 2
-
-   overview
-   quickstart
-   configuration
-   usage
-   support
