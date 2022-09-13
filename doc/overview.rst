@@ -27,7 +27,7 @@ There are two advanced features here:
   The DUT will be disconnected from default framework only if other framework try to access that resource, this will be automatically handled by ``FC`` coordinator.
 
   This is useful when some framework is treated as primary framework, then this feature could improve the schedule efficiency of primary framework.
-  By default, ``FC`` will use fair scheduler.
+  By default, all frameworks will be treated equally.
 
   .. note::
     only one framework could be configured as default framework, otherwise there will be conflict.
@@ -38,6 +38,7 @@ There are two advanced features here:
   The ``FC`` will force cancel the occupation of low priority framework to let high priority framework to seize the resource.
 
   This is useful when some framework takes critical task while other framework takes non-important task.
+  By default, ``FC`` will use fair scheduler.
 
 Architecture
 ------------
