@@ -116,7 +116,7 @@ class Plugin(FCPlugin, Lava):
         """
 
         job_info = await self.lava_get_job_info(job_id)
-        return job_id, job_info["tags"] if job_info else None
+        return (job_id, job_info["tags"]) if job_info else None
 
     async def __get_device_tags(self, device):
         """
@@ -124,7 +124,7 @@ class Plugin(FCPlugin, Lava):
         """
 
         device_info = await self.lava_get_device_info(device)
-        return device, device_info["tags"] if device_info else None
+        return (device, device_info["tags"]) if device_info else None
 
     async def __get_device_info(self, device, clear=False):
         """
