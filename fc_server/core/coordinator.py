@@ -57,22 +57,10 @@ class Coordinator:
             for framework in Config.registered_frameworks
         }
 
-        default_framework_strategies = [
-            framework
-            for framework in Config.registered_frameworks
-            if Config.frameworks_config[framework].get("default", False)
-        ]
-        default_framework_number = len(default_framework_strategies)
-        if default_framework_number > 1:
-            logging.fatal("Fatal: at most one default framework could be specifed!")
-            sys.exit(1)
-        self.__default_framework = (
-            None if default_framework_number == 0 else default_framework_strategies[0]
-        )
-        if self.__default_framework:
-            logging.info("Default framework: %s", self.__default_framework)
+        if Config.default_framework:
+            logging.info("Default framework: %s", Config.default_framework)
             for framework in self.__framework_plugins:
-                if framework.__module__.split(".")[-1] == self.__default_framework:
+                if framework.__module__.split(".")[-1] == Config.default_framework:
                     self.__default_framework_plugin = framework
                     if not hasattr(
                         self.__default_framework_plugin, "default_framework_disconnect"
@@ -161,8 +149,8 @@ class Coordinator:
     def managed_disconnect_resource(self, resource):
         return resource in self.__managed_disconnect_resources
 
-    def is_default_framework(self, context):
-        return context.__module__.split(".")[-1] == self.__default_framework
+    def is_default_framework(self, context):  # pylint: disable=no-self-use
+        return context.__module__.split(".")[-1] == Config.default_framework
 
     def __get_low_priority_frameworks(self, cur_framework):
         """
@@ -178,8 +166,8 @@ class Coordinator:
 
     async def is_resource_available(self, context, resource):
         if self.__managed_resources_status.get(resource, "") == "fc":
-            if self.__default_framework:
-                if context.__module__.split(".")[-1] == self.__default_framework:
+            if Config.default_framework:
+                if context.__module__.split(".")[-1] == Config.default_framework:
                     return True
 
                 (
@@ -300,7 +288,7 @@ class Coordinator:
         ):
             self.__set_resource_status(resource, "fc")
 
-        if self.__default_framework and resource in self.__managed_disconnect_resources:
+        if Config.default_framework and resource in self.__managed_disconnect_resources:
             # restore default framework resource status
             self.__managed_disconnect_resources.remove(resource)
             if not await self.__default_framework_plugin.default_framework_connect(

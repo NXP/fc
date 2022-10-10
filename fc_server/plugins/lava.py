@@ -46,7 +46,6 @@ class Plugin(FCPlugin, Lava):
     def __init__(self, frameworks_config):
         super().__init__()
 
-        self.identities = frameworks_config["identities"]  # lavacli identities
         self.schedule_interval = 30  # poll lava job queues every 30 seconds
         accurate_scheduler_criteria = frameworks_config.get(
             "accurate_scheduler_criteria", None
@@ -60,9 +59,6 @@ class Plugin(FCPlugin, Lava):
         self.scheduler_cache = {}  # cache to avoid busy scheduling
         self.seize_cache = {}  # cache to avoid busy seize
         self.job_tags_cache = {}  # cache to store job tags
-
-        self.device_description_prefix = "[FC]"
-        self.lava_default_description = "Created automatically by LAVA."
 
     @safe_cache
     def __update_cache(self, cache_name, job_id, value):

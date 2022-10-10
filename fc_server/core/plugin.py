@@ -32,6 +32,7 @@ class FCPlugin(ABC):
     """
 
     def __init__(self):
+        super().__init__()
         self.schedule_tick = 0
         self.schedule_interval = 1
 

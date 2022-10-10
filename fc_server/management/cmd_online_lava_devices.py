@@ -32,19 +32,42 @@ from fc_server.plugins.utils.lava import Lava
 
 
 class LavaManagement(Lava):
-    def __init__(self):
-        self.managed_resources = Config.managed_resources
-        self.identities = Config.frameworks_config["lava"]["identities"]
+    async def __get_device_description(self, device):
+        device_info = await self.lava_get_device_info(device)
+        return (
+            device_info["description"] if device_info else self.lava_default_description
+        )
 
     async def action(self):
-        maintenance_devices = [
+        recover_devices = [
             device["hostname"]
             for device in await self.lava_get_devices()
-            if device["hostname"] in self.managed_resources
+            if device["hostname"] in Config.managed_resources
             and device["health"] in ("Maintenance",)
         ]
 
-        await self.lava_online_devices(*maintenance_devices)
+        if Config.default_framework == "lava":
+            recover_devices = [
+                (device, await self.__get_device_description(device))
+                for device in recover_devices
+                if (await self.__get_device_description(device)).startswith(
+                    self.device_description_prefix
+                )
+            ]
+
+            await asyncio.gather(
+                *[
+                    self.lava_online_devices(
+                        device, desc=desc.split(self.device_description_prefix)[-1]
+                    )
+                    for device, desc in recover_devices
+                ]
+            )
+        else:
+            await asyncio.gather(
+                *[self.lava_online_devices(device) for device in recover_devices]
+            )
+
         logging.info("Recover lava devices done.")
 
 

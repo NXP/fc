@@ -79,3 +79,17 @@ class Config:
         Config.frameworks_config = cfg["frameworks_config"]
         Config.priority_scheduler = cfg.get("priority_scheduler", False)
         Config.api_server = cfg["api_server"]
+
+        default_framework_strategies = [
+            framework
+            for framework in Config.registered_frameworks
+            if Config.frameworks_config[framework].get("default", False)
+        ]
+        default_framework_number = len(default_framework_strategies)
+        if default_framework_number > 1:
+            logging.fatal("Fatal: at most one default framework could be specifed!")
+            sys.exit(1)
+
+        Config.default_framework = (
+            None if default_framework_number == 0 else default_framework_strategies[0]
+        )

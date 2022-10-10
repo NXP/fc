@@ -30,6 +30,7 @@ import types
 import yaml
 
 from fc_server.core import AsyncRunMixin
+from fc_server.core.config import Config
 from fc_server.core.decorators import verify_cmd_results
 
 try:
@@ -39,6 +40,11 @@ except ImportError:
 
 
 class Lava(AsyncRunMixin):
+    def __init__(self):
+        self.identities = Config.frameworks_config["lava"]["identities"]
+        self.device_description_prefix = "[FC]"
+        self.lava_default_description = "Created automatically by LAVA."
+
     @singledispatchmethod
     async def lava_maintenance_devices(
         self, *devices, desc=None
