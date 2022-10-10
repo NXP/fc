@@ -31,7 +31,7 @@ from fc_server.core.config import Config
 from fc_server.plugins.utils.lava import Lava
 
 
-class LavaManagement(Lava):  # pylint: disable=too-few-public-methods
+class LavaManagement(Lava):
     def __init__(self):
         self.managed_resources = Config.managed_resources
         self.identities = Config.frameworks_config["lava"]["identities"]
