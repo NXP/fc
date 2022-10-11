@@ -208,6 +208,10 @@ class Plugin(FCPlugin, Lava):
             logging.info("%s default in maintenance.", resource)
             return True, False
 
+        if device_info["health"] == "Retired":
+            logging.info("%s default in retired.", resource)
+            return False, False
+
         # ask default framework disconnect this resource
         logging.info("Disconnect %s from default framework", resource)
         desc = await self.__get_device_description(resource)
@@ -244,6 +248,27 @@ class Plugin(FCPlugin, Lava):
         """
 
         async def schedule_prepare():
+            # retire managed resources
+            devices_assemble = [device["hostname"] for device in devices]
+            retired_managed_resources = list(
+                set(driver.managed_resources).difference(set(devices_assemble))
+            )
+
+            for retired_managed_resource in retired_managed_resources:
+                if (
+                    driver.managed_resources_status[retired_managed_resource]
+                    != "retired"
+                ):
+                    driver.retire_resource(retired_managed_resource)
+
+            for managed_resource in driver.managed_resources:
+                if (
+                    driver.managed_resources_status[managed_resource] == "retired"
+                    and managed_resource in devices_assemble
+                ):
+                    driver.reset_resource(managed_resource)
+
+            # category managed resources
             for device in devices:
                 if device["hostname"] in driver.managed_resources and device[
                     "health"

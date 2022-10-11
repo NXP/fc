@@ -300,5 +300,11 @@ class Coordinator:
     def accept_resource(self, resource, context):
         self.__set_resource_status(resource, context.__module__.split(".")[-1])
 
+    def retire_resource(self, resource):
+        self.__set_resource_status(resource, "retired")
+
+    def reset_resource(self, resource):
+        self.__set_resource_status(resource, "fc")
+
     def start(self):
         asyncio.run(self.__action())
