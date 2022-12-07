@@ -322,6 +322,12 @@ class Plugin(FCPlugin, Lava):
         managed_resources_category = {"available": {}, "non-available": {}}
         devices = await self.lava_get_devices()
 
+        if not devices:
+            logging.warning(
+                "No device fetched from lava server, delay to next scheduling slot"
+            )
+            return
+
         if driver.is_default_framework(self):
             async for _ in schedule_prepare():
                 pass
