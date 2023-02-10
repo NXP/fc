@@ -76,7 +76,7 @@ Run with docker package
 
 .. code-block:: console
 
-  $ git clone https://github.com/NXPMicro/fc.git
+  $ git clone https://github.com/NXP/fc.git
   $ cd fc/docker/fc_server
   $ docker-compose up -d
 
@@ -100,6 +100,6 @@ Run with docker package
 
 .. code-block:: console
 
-  $ git clone https://github.com/NXPMicro/fc.git
+  $ git clone https://github.com/NXP/fc.git
   $ cd fc/docker/fc_guarder
   $ docker-compose up -d

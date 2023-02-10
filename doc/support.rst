@@ -1,4 +1,4 @@
 Support
 =======
 
-Go to https://github.com/NXPmicro/fc for help.
+Go to https://github.com/NXP/fc for help.
