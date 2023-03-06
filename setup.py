@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright 2021-2022 NXP
+# Copyright 2021-2023 NXP
 #
 # The MIT License (MIT)
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -126,7 +126,6 @@ elif PKG == "fc-client":
         },
         install_requires=[
             "prettytable==2.2.1",
-            "labgrid==0.4.1",
             LABGRID_PYSERIAL_FIX,
         ],
     )
