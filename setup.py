@@ -128,4 +128,7 @@ elif PKG == "fc-client":
             "prettytable==2.2.1",
             LABGRID_PYSERIAL_FIX,
         ],
+        extras_require={
+            'labgrid': ['labgrid==0.4.1'],
+        },
     )
