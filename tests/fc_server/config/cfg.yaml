@@ -1,0 +1,24 @@
+registered_frameworks:
+  - lava
+  - labgrid
+
+frameworks_config:
+  lava:
+    identities: $lava_identity
+    priority: 1
+    default: true
+  labgrid:
+    lg_crossbar: ws://$labgrid_crossbar_ip:20408/ws
+    priority: 2
+    seize: false
+
+priority_scheduler: true
+
+api_server:
+  port: 8600
+
+managed_resources:
+  $farm_type:
+    $device_type:
+      - $resource1
+      - $resource2

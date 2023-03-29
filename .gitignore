@@ -4,9 +4,10 @@
 *.egg-info
 dist
 log
-cfg.yaml
+fc_server/config/cfg.yaml
 client.env
 lavacli.yaml
 __pycache__
 .vscode
 .env
+run.log
