@@ -22,12 +22,11 @@
 # THE SOFTWARE.
 
 
-import os
 import asyncio
+import os
 
-from fc_server.core.logger import Logger
 from fc_server.core.config import Config
-
+from fc_server.core.logger import Logger
 
 fc_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 Logger.init(fc_path)

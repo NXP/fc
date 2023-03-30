@@ -25,12 +25,12 @@
 import asyncio
 import logging
 import os
+
 from fc_server.core.decorators import (
     check_priority_scheduler,
     check_seize_strategy,
     safe_cache,
 )
-
 from fc_server.core.plugin import FCPlugin
 from fc_server.plugins.utils.labgrid import Labgrid
 

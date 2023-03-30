@@ -26,9 +26,9 @@
 import os
 import pathlib
 import sys
-import pkg_resources
 
-from setuptools import find_packages, setup, Command
+import pkg_resources
+from setuptools import Command, find_packages, setup
 
 from fc_common.version import get_package_version
 

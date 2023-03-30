@@ -22,9 +22,9 @@
 # THE SOFTWARE.
 
 
+import logging
 import os
 import sys
-import logging
 
 # pylint: disable=too-few-public-methods
 

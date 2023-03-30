@@ -29,7 +29,6 @@ import os
 import signal
 import subprocess
 import sys
-
 from getpass import getuser
 from socket import gethostname
 

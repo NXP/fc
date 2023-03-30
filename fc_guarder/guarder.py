@@ -26,10 +26,11 @@
 import asyncio
 import os
 import time
+
 import requests
 
-from fc_server.management.cmd_online_lava_devices import LavaManagement
 from fc_common.version import get_runtime_version
+from fc_server.management.cmd_online_lava_devices import LavaManagement
 
 
 class Guarder:

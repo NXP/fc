@@ -24,6 +24,7 @@
 
 
 import logging
+
 from fc_common.version import get_runtime_version
 from fc_server.core.coordinator import Coordinator
 

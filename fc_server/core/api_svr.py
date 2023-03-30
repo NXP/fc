@@ -23,12 +23,13 @@
 
 
 import asyncio
-from contextlib import suppress
 import logging
+from contextlib import suppress
 from string import Template
 
 import flatdict
 from aiohttp import web
+
 from fc_server.core import AsyncRunMixin
 from fc_server.core.config import Config
 
