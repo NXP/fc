@@ -129,6 +129,6 @@ elif PKG == "fc-client":
             LABGRID_PYSERIAL_FIX,
         ],
         extras_require={
-            'labgrid': ['labgrid==0.4.1'],
+            "labgrid": ["labgrid==0.4.1"],
         },
     )
