@@ -85,6 +85,9 @@ class Coordinator:
         # assure no seize for this job when already a seize for this job there
         self.coordinating_job_records = {}
 
+        # record timeout task for seized status
+        self.seized_status_timeout_records = {}
+
         logging.info("FC managed resource list:")
         logging.info(Config.managed_resources)
 
@@ -217,6 +220,11 @@ class Coordinator:
         # pylint: disable=consider-iterating-dictionary
         return job_id in list(self.coordinating_job_records.keys())
 
+    async def __seized_status_timeout(self, resource):
+        await asyncio.sleep(90)
+        logging.info("* %s seized status be reset to fc due to timeout", resource)
+        self.reset_resource(resource)
+
     @check_priority_scheduler()
     async def coordinate_resources(self, context, job_id, *candidated_resources):
         """
@@ -266,6 +274,15 @@ class Coordinator:
                         candidated_seized_resource,
                         context.__module__.split(".")[-1] + "_seized",
                     )
+
+                    # timeout for seized status
+                    timeout_task = asyncio.create_task(
+                        self.__seized_status_timeout(candidated_seized_resource)
+                    )
+                    self.seized_status_timeout_records[
+                        candidated_seized_resource
+                    ] = timeout_task
+
                     break
             low_priority_resources.append(candidated_seized_resource)
 
@@ -298,6 +315,11 @@ class Coordinator:
                 self.__managed_issue_disconnect_resources.append(resource)
 
     def accept_resource(self, resource, context):
+        # cancel seized status timeout task if this resource is seized from others
+        if resource in self.seized_status_timeout_records:
+            timeout_task = self.seized_status_timeout_records.pop(resource)
+            timeout_task.cancel()
+
         self.__set_resource_status(resource, context.__module__.split(".")[-1])
 
     def retire_resource(self, resource):
