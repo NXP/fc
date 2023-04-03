@@ -200,28 +200,17 @@ class TestCoordinator:
         assert coordinator.managed_resources_status["$resource1"] == "fc"
 
     @pytest.mark.asyncio
-    async def test_coordinate_resources(
-        self, mocker, coordinator, lava_plugin, labgrid_plugin
-    ):
+    async def test_coordinate_resources_basic(self, coordinator, lava_plugin):
         assert await coordinator.coordinate_resources(lava_plugin, 0, *[]) == []
 
         assert await coordinator.coordinate_resources(lava_plugin, 0, "$resource1") == [
             "$resource1"
         ]
 
-        coordinator.accept_resource("$resource1", labgrid_plugin)
-        future = asyncio.Future()
-        ret = MagicMock()
-        future.set_result(ret)
-        mock_force_kick_off = mocker.patch(
-            "fc_server.plugins.labgrid.Plugin.force_kick_off",
-            return_value=future,
-        )
-        assert await coordinator.coordinate_resources(lava_plugin, 0, "$resource1") == [
-            "$resource1"
-        ]
-        mock_force_kick_off.assert_called_with("$resource1")
-
+    @pytest.mark.asyncio
+    async def test_coordinate_resources_seize_from_lava(
+        self, mocker, coordinator, lava_plugin
+    ):
         coordinator.accept_resource("$resource1", lava_plugin)
         future = asyncio.Future()
         ret = MagicMock()
@@ -234,3 +223,39 @@ class TestCoordinator:
             "$resource1"
         ]
         mock_force_kick_off.assert_not_called()
+
+    @pytest.mark.parametrize("seized_resource_awared", [True, False])
+    @pytest.mark.asyncio
+    async def test_coordinate_resources_seize_from_labgrid(
+        self, seized_resource_awared, mocker, coordinator, lava_plugin, labgrid_plugin
+    ):
+        coordinator.accept_resource("$resource1", labgrid_plugin)
+
+        future = asyncio.Future()
+        ret = MagicMock()
+        future.set_result(ret)
+        mock_force_kick_off = mocker.patch(
+            "fc_server.plugins.labgrid.Plugin.force_kick_off",
+            return_value=future,
+        )
+
+        future = asyncio.Future()
+        ret = MagicMock()
+        future.set_result(ret)
+        mocker_reset_resource = mocker.patch(
+            "fc_server.core.coordinator.Coordinator.reset_resource", return_value=None
+        )
+        native_sleep = asyncio.sleep
+        if not seized_resource_awared:
+            mocker.patch("asyncio.sleep", return_value=future)
+
+        assert await coordinator.coordinate_resources(lava_plugin, 0, "$resource1") == [
+            "$resource1"
+        ]
+
+        if seized_resource_awared:
+            coordinator.accept_resource("$resource1", get_lava_plugin)
+        await native_sleep(0)
+
+        mock_force_kick_off.assert_called_with("$resource1")
+        assert mocker_reset_resource.called == (not seized_resource_awared)
