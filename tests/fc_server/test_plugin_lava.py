@@ -22,7 +22,6 @@
 # THE SOFTWARE.
 
 
-import asyncio
 from unittest.mock import MagicMock
 
 import pytest
@@ -36,9 +35,8 @@ def lava_plugin():
     return Plugin(config)
 
 
-@pytest.fixture(name="lava_job")
-def create_lava_job():
-    future = asyncio.Future()
+@pytest.fixture(name="lava_job_info")
+def create_lava_job_info():
     job_info = {
         "description": "foo",
         "device": None,
@@ -55,15 +53,7 @@ def create_lava_job():
         "tags": [],
         "visibility": "Public",
     }
-    future.set_result(job_info)
-    return future
-
-
-@pytest.fixture(name="lava_job_failure")
-def create_lava_job_failure():
-    future = asyncio.Future()
-    future.set_result(None)
-    return future
+    return job_info
 
 
 @pytest.fixture(name="lava_device_info")
@@ -101,26 +91,6 @@ def create_lava_device_info_with_job(lava_device_info):
     return lava_device_info
 
 
-@pytest.fixture(name="lava_device_unknown")
-def create_lava_device_unknown(lava_device_info_unknown, create_future):
-    return create_future(lava_device_info_unknown)
-
-
-@pytest.fixture(name="lava_device_good")
-def create_lava_device_good(lava_device_info_good, create_future):
-    return create_future(lava_device_info_good)
-
-
-@pytest.fixture(name="lava_device_failure")
-def create_lava_device_failure(create_future):
-    return create_future(None)
-
-
-@pytest.fixture(name="lava_device_with_job")
-def create_lava_device_with_job(lava_device_info_with_job, create_future):
-    return create_future(lava_device_info_with_job)
-
-
 # pylint: disable=protected-access
 class TestPluginLava:
     def test_update_cache(self, plugin):
@@ -128,35 +98,32 @@ class TestPluginLava:
         assert plugin.scheduler_cache["0"] == ["foo"]
 
     @pytest.mark.asyncio
-    async def test_get_job_tags(self, mocker, plugin, lava_job, lava_job_failure):
-        mocker.patch(
-            "fc_server.plugins.lava.Plugin.lava_get_job_info",
-            return_value=lava_job,
+    async def test_get_job_tags(self, asyncio_patch, mocker, plugin, lava_job_info):
+        asyncio_patch(
+            mocker, "fc_server.plugins.lava.Plugin.lava_get_job_info", lava_job_info
         )
         ret = await plugin._Plugin__get_job_tags("0")
         assert ret == ("0", [])
 
-        mocker.patch(
-            "fc_server.plugins.lava.Plugin.lava_get_job_info",
-            return_value=lava_job_failure,
-        )
+        asyncio_patch(mocker, "fc_server.plugins.lava.Plugin.lava_get_job_info", None)
+
         ret = await plugin._Plugin__get_job_tags("0")
         assert ret is None
 
     @pytest.mark.asyncio
     async def test_get_device_tags(
-        self, mocker, plugin, lava_device_unknown, lava_device_failure
+        self, asyncio_patch, mocker, plugin, lava_device_info_unknown
     ):
-        mocker.patch(
+        asyncio_patch(
+            mocker,
             "fc_server.plugins.lava.Plugin.lava_get_device_info",
-            return_value=lava_device_unknown,
+            lava_device_info_unknown,
         )
         ret = await plugin._Plugin__get_device_tags("$resource1")
         assert ret == ("$resource1", [])
 
-        mocker.patch(
-            "fc_server.plugins.lava.Plugin.lava_get_device_info",
-            return_value=lava_device_failure,
+        asyncio_patch(
+            mocker, "fc_server.plugins.lava.Plugin.lava_get_device_info", None
         )
         ret = await plugin._Plugin__get_device_tags("$resource1")
         assert ret is None
@@ -164,71 +131,70 @@ class TestPluginLava:
     @pytest.mark.asyncio
     async def test_get_device_info(
         self,
+        asyncio_patch,
         mocker,
         plugin,
         lava_device_info_unknown,
-        lava_device_unknown,
         lava_device_info_good,
-        lava_device_good,
     ):
-        mocker.patch(
+        asyncio_patch(
+            mocker,
             "fc_server.plugins.lava.Plugin.lava_get_device_info",
-            return_value=lava_device_unknown,
+            lava_device_info_unknown,
         )
         ret = await plugin._Plugin__get_device_info("$resource1")
         assert ret == lava_device_info_unknown
 
-        mocker.patch(
+        asyncio_patch(
+            mocker,
             "fc_server.plugins.lava.Plugin.lava_get_device_info",
-            return_value=lava_device_good,
+            lava_device_info_good,
         )
         ret = await plugin._Plugin__get_device_info("$resource1", clear=True)
         assert ret == lava_device_info_good
 
-        mocker.patch(
+        asyncio_patch(
+            mocker,
             "fc_server.plugins.lava.Plugin.lava_get_device_info",
-            return_value=lava_device_unknown,
+            lava_device_info_unknown,
         )
         ret = await plugin._Plugin__get_device_info("$resource1")
         assert ret == lava_device_info_good
 
     @pytest.mark.asyncio
-    async def test_force_kick_off(self, mocker, plugin, lava_device_with_job):
-        mocker.patch(
+    async def test_force_kick_off(
+        self, asyncio_patch, mocker, plugin, lava_device_info_with_job
+    ):
+        asyncio_patch(
+            mocker,
             "fc_server.plugins.lava.Plugin.lava_get_device_info",
-            return_value=lava_device_with_job,
+            lava_device_info_with_job,
         )
 
-        future = asyncio.Future()
-        ret = MagicMock()
-        future.set_result(ret)
-        mock_lava_cancel_job = mocker.patch(
-            "fc_server.plugins.lava.Plugin.lava_cancel_job",
-            return_value=future,
+        mocker_lava_cancel_job = asyncio_patch(
+            mocker, "fc_server.plugins.lava.Plugin.lava_cancel_job", MagicMock()
         )
         await plugin.force_kick_off("$resource1")
-        mock_lava_cancel_job.assert_called_with("1")
+        mocker_lava_cancel_job.assert_called_with("1")
 
     @pytest.mark.asyncio
-    async def test_seize_resource(self, mocker, coordinator, plugin):
-        future = asyncio.Future()
-        future.set_result(("$resource1", []))
-        mocker.patch(
+    async def test_seize_resource(self, asyncio_patch, mocker, coordinator, plugin):
+        asyncio_patch(
+            mocker,
             "fc_server.plugins.lava.Plugin._Plugin__get_device_tags",
-            return_value=future,
+            ("$resource1", []),
         )
 
-        future2 = asyncio.Future()
-        future2.set_result(MagicMock())
-        mock_coordinate_resources = mocker.patch(
+        mocker_coordinate_resources = asyncio_patch(
+            mocker,
             "fc_server.core.coordinator.Coordinator.coordinate_resources",
-            return_value=future2,
+            MagicMock(),
         )
 
         plugin.job_tags_cache["0"] = []
 
         await plugin._Plugin__seize_resource(coordinator, "0", ["$resource1"])
-        mock_coordinate_resources.assert_called()
+        mocker_coordinate_resources.assert_called()
 
     @pytest.mark.parametrize(
         "device, seize",
@@ -262,15 +228,11 @@ class TestPluginLava:
         ],
     )
     @pytest.mark.asyncio
-    async def test_schedule(self, mocker, plugin, coordinator, device, seize):
-        future = asyncio.Future()
-        future.set_result(device)
-        mocker.patch(
-            "fc_server.plugins.lava.Plugin.lava_get_devices",
-            return_value=future,
-        )
+    async def test_schedule(
+        self, asyncio_patch, mocker, plugin, coordinator, device, seize
+    ):
+        asyncio_patch(mocker, "fc_server.plugins.lava.Plugin.lava_get_devices", device)
 
-        future = asyncio.Future()
         queued_job_info = [
             {
                 "description": "foo",
@@ -279,13 +241,12 @@ class TestPluginLava:
                 "submitter": "bar",
             }
         ]
-        future.set_result(queued_job_info)
-        mocker.patch(
+        asyncio_patch(
+            mocker,
             "fc_server.plugins.lava.Plugin.lava_get_queued_jobs",
-            return_value=future,
+            queued_job_info,
         )
 
-        future = asyncio.Future()
         job_info = {
             "description": "foo",
             "device": None,
@@ -302,18 +263,15 @@ class TestPluginLava:
             "tags": [],
             "visibility": "Public",
         }
-        future.set_result(job_info)
-        mocker.patch(
-            "fc_server.plugins.lava.Plugin.lava_get_job_info",
-            return_value=future,
+        asyncio_patch(
+            mocker, "fc_server.plugins.lava.Plugin.lava_get_job_info", job_info
         )
 
-        future = asyncio.Future()
         device_tags = ("$resource1", [])
-        future.set_result(device_tags)
-        mocker.patch(
+        asyncio_patch(
+            mocker,
             "fc_server.plugins.lava.Plugin._Plugin__get_device_tags",
-            return_value=future,
+            device_tags,
         )
 
         async def mocker_coro():
@@ -327,10 +285,10 @@ class TestPluginLava:
         async def mocker_seize():
             pass
 
-        mock_seize = mocker.patch(
+        mocker_seize = mocker.patch(
             "fc_server.plugins.lava.Plugin._Plugin__seize_resource",
             return_value=mocker_seize(),
         )
 
         await plugin.schedule(coordinator)
-        assert mock_seize.called == seize
+        assert mocker_seize.called == seize

@@ -22,7 +22,6 @@
 # THE SOFTWARE.
 
 
-import asyncio
 from unittest.mock import MagicMock
 
 import pytest
@@ -43,16 +42,12 @@ def labgrid_plugin():
 # pylint: disable=protected-access
 class TestPluginLabgrid:
     @pytest.mark.asyncio
-    async def test_force_kick_off(self, mocker, plugin):
-        future = asyncio.Future()
+    async def test_force_kick_off(self, asyncio_patch, mocker, plugin):
         token = "7GN5HFQOEU"
-        future.set_result(token)
-        mocker.patch(
-            "fc_server.plugins.labgrid.Plugin.labgrid_get_place_token",
-            return_value=future,
+        asyncio_patch(
+            mocker, "fc_server.plugins.labgrid.Plugin.labgrid_get_place_token", token
         )
 
-        future = asyncio.Future()
         ret = {
             "Reservation '7GN5HFQOEU'": {
                 "owner": "foo/bar",
@@ -69,26 +64,19 @@ class TestPluginLabgrid:
                 "timeout": "2023-03-28 11:20:01.893404",
             }
         }
-        future.set_result(ret)
-        mocker.patch(
-            "fc_server.plugins.labgrid.Plugin.labgrid_get_reservations",
-            return_value=future,
+        asyncio_patch(
+            mocker, "fc_server.plugins.labgrid.Plugin.labgrid_get_reservations", ret
         )
 
-        future = asyncio.Future()
-        ret = MagicMock()
-        future.set_result(ret)
-        mocker_labgrid_cancel_reservation = mocker.patch(
+        mocker_labgrid_cancel_reservation = asyncio_patch(
+            mocker,
             "fc_server.plugins.labgrid.Plugin.labgrid_cancel_reservation",
-            return_value=future,
+            MagicMock(),
         )
-
-        future = asyncio.Future()
-        ret = MagicMock()
-        future.set_result(ret)
-        mocker_labgrid_release_place = mocker.patch(
+        mocker_labgrid_release_place = asyncio_patch(
+            mocker,
             "fc_server.plugins.labgrid.Plugin.labgrid_release_place",
-            return_value=future,
+            MagicMock(),
         )
 
         await plugin.force_kick_off("$resource1")
@@ -96,20 +84,18 @@ class TestPluginLabgrid:
         mocker_labgrid_release_place.assert_called()
 
     @pytest.mark.asyncio
-    async def test_seize_resource(self, mocker, coordinator, plugin):
-        future = asyncio.Future()
-        future.set_result(MagicMock())
-        mock_coordinate_resources = mocker.patch(
+    async def test_seize_resource(self, asyncio_patch, mocker, coordinator, plugin):
+        mocker_coordinate_resources = asyncio_patch(
+            mocker,
             "fc_server.core.coordinator.Coordinator.coordinate_resources",
-            return_value=future,
+            MagicMock(),
         )
-
         await plugin._Plugin__seize_resource(coordinator, "foo", ["$resource1"])
-        mock_coordinate_resources.assert_called()
+
+        mocker_coordinate_resources.assert_called()
 
     @pytest.mark.asyncio
-    async def test_schedule(self, mocker, plugin, coordinator):
-        future = asyncio.Future()
+    async def test_schedule(self, asyncio_patch, mocker, plugin, coordinator):
         ret = {
             "Reservation '83UF223356'": {
                 "owner": "fc/fc",
@@ -140,33 +126,29 @@ class TestPluginLabgrid:
                 "timeout": "2023-03-28 11:20:01.893404",
             },
         }
-        future.set_result(ret)
-        mocker.patch(
-            "fc_server.plugins.labgrid.Plugin.labgrid_get_reservations",
-            return_value=future,
+        asyncio_patch(
+            mocker, "fc_server.plugins.labgrid.Plugin.labgrid_get_reservations", ret
         )
 
-        future = asyncio.Future()
         ret = (True, True)
-        future.set_result(ret)
-        mocker.patch(
-            "fc_server.plugins.lava.Plugin.default_framework_disconnect",
-            return_value=future,
+        asyncio_patch(
+            mocker, "fc_server.plugins.lava.Plugin.default_framework_disconnect", ret
         )
 
-        future = asyncio.Future()
-        future.set_result(MagicMock())
-        mocker.patch(
+        asyncio_patch(
+            mocker,
             "fc_server.plugins.labgrid.Plugin._Plugin__labgrid_guard_reservation",
-            return_value=future,
+            MagicMock(),
         )
-        mocker.patch(
+        asyncio_patch(
+            mocker,
             "fc_server.plugins.labgrid.Plugin.labgrid_cancel_reservation",
-            return_value=future,
+            MagicMock(),
         )
-        mocker.patch(
+        asyncio_patch(
+            mocker,
             "fc_server.plugins.labgrid.Plugin.labgrid_release_place",
-            return_value=future,
+            MagicMock(),
         )
 
         async def mocker_labgrid_fc_reservation():

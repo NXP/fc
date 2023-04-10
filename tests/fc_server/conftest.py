@@ -24,6 +24,7 @@
 
 import asyncio
 import os
+import sys
 
 import pytest
 
@@ -47,10 +48,18 @@ def coordinator():
 
 
 @pytest.fixture
-def create_future():
-    def _create_future(result):
+def asyncio_patch():
+    def _asyncio_patch(mocker, target, result):
+        if sys.version_info >= (3, 8):
+            from unittest.mock import (  # pylint: disable=import-outside-toplevel
+                AsyncMock,
+            )
+
+            async_mock = AsyncMock(return_value=result)
+            return mocker.patch(target, side_effect=async_mock)
+
         future = asyncio.Future()
         future.set_result(result)
-        return future
+        return mocker.patch(target, return_value=future)
 
-    return _create_future
+    return _asyncio_patch
