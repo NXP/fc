@@ -2,6 +2,4 @@
 
 set -x
 
-apt-get -q update
-apt-get install -y --no-install-recommends black isort pylint
-
+pip3 install -r requirements/ci-requirements.txt

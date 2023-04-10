@@ -1,2 +1,3 @@
 -r requirements/server-requirements.txt
 -r requirements/client-requirements.txt
+-r requirements/ci-requirements.txt
