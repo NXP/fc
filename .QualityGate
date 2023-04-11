@@ -1,0 +1,14 @@
+#!/bin/bash -ex
+
+EXIT_CODE=0
+
+# install dep
+ci/setup.sh
+
+# run checks
+ci/black.sh || EXIT_CODE=1
+ci/pylint.sh || EXIT_CODE=1
+ci/pytest.sh || EXIT_CODE=1
+ci/package.sh || EXIT_CODE=1
+
+exit $EXIT_CODE
