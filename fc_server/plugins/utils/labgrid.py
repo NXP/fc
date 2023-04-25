@@ -27,10 +27,18 @@ import traceback
 
 import yaml
 
+from fc_common import which
 from fc_server.core import AsyncRunMixin
 
 
 class Labgrid(AsyncRunMixin):
+    @which(
+        "labgrid-client",
+        "Use 'pip3 install labgrid-client' to install labgrid software please.",
+    )
+    def __init__(self):
+        pass
+
     async def labgrid_get_places(self):
         cmd = "labgrid-client p"
         _, places, _ = await self._run_cmd(cmd)

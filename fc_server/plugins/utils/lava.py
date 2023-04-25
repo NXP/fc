@@ -30,6 +30,7 @@ import types
 
 import yaml
 
+from fc_common import which
 from fc_server.core import AsyncRunMixin
 from fc_server.core.config import Config
 from fc_server.core.decorators import verify_cmd_results
@@ -41,6 +42,7 @@ except ImportError:
 
 
 class Lava(AsyncRunMixin):
+    @which("lavacli", "Use 'pip3 install lavacli' to install lava client please.")
     def __init__(self):
         self.identities = Config.frameworks_config["lava"]["identities"]
         self.device_description_prefix = "[FC]"

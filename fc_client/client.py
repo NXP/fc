@@ -36,6 +36,7 @@ import prettytable
 import requests
 import yaml
 
+from fc_common import which
 from fc_common.version import get_runtime_version
 
 
@@ -87,6 +88,10 @@ class Client:
         print(table.get_string(sortby="Resource"))
 
     @staticmethod
+    @which(
+        "labgrid-client",
+        "Use 'pip3 install labgrid-client' to install labgrid software please.",
+    )
     def lock(args):
         resource = args.resource
         if resource:
@@ -119,6 +124,10 @@ class Client:
             sys.exit(1)
 
     @staticmethod
+    @which(
+        "labgrid-client",
+        "Use 'pip3 install labgrid-client' to install labgrid software please.",
+    )
     def unlock(args):
         me = "/".join(  # pylint: disable=invalid-name
             (
