@@ -50,8 +50,6 @@ if sys.argv[-1].startswith("fc"):
 else:
     PKG = get_project_name()
 
-LABGRID_PYSERIAL_FIX = "pyserial-labgrid==3.4.0.1"
-
 common_setup = {
     "cmdclass": {
         "clean": CleanCommand,
@@ -77,9 +75,8 @@ if PKG == "fc-server":
             "async-lru==1.0.3",
             "flatdict==4.0.1",
             "lavacli==1.2",
-            "labgrid==0.4.1",
+            "labgrid==23.0.1",
             "singledispatchmethod==1.0",
-            LABGRID_PYSERIAL_FIX,
         ],
     )
 elif PKG == "fc-guarder":
@@ -109,9 +106,6 @@ elif PKG == "fc-client":
         },
         install_requires=[
             "prettytable==2.2.1",
-            LABGRID_PYSERIAL_FIX,
+            "labgrid==23.0.1",
         ],
-        extras_require={
-            "labgrid": ["labgrid==0.4.1"],
-        },
     )
