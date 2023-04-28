@@ -1,0 +1,34 @@
+name: 'CI'
+
+# **What it does**: Checks coding standards, tests and more
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+# Interupt previous runs on PR update
+concurrency:
+  group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
+  cancel-in-progress: true
+
+jobs:
+  NXP-QualityGate:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup node
+        uses: actions/setup-python@v4.6.0
+        with:
+          cache: pip
+          python-version: '3.10'
+
+      - name: Run Quality Gate
+        run: bash -ex .QualityGate
