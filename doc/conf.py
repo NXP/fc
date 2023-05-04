@@ -5,7 +5,7 @@
 import subprocess
 
 project = 'FC'
-copyright = '2021-2022, NXP, Larry Shen'
+copyright = '2021-2023, NXP, Larry Shen'
 author = 'Larry Shen'
 
 version = (

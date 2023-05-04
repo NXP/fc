@@ -22,10 +22,6 @@ FC could be installed by ``pip``.
   $ sudo apt-get install -y microcom corkscrew
   $ sudo pip3 install fc-client
 
-.. note::
-
-   By default, the ``fc-client`` won't install labgrid to avoid any conflict, but you could use ``pip3 install fc-client[labgrid]`` to installed a pinned version if you haven't installed labgrid, or use ``pip3 install labgrid`` to install a version for yourself.
-
 * **fc-guarder**
 
 .. code-block:: console
