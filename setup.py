@@ -71,12 +71,12 @@ if PKG == "fc-server":
             ]
         },
         install_requires=[
-            "aiohttp==3.7.4.post0",
-            "async-lru==1.0.3",
-            "flatdict==4.0.1",
+            "aiohttp>=3.7.4.post0",
+            "async-lru>=1.0.3",
+            "flatdict>=4.0.1",
             "lavacli==1.2",
             "labgrid==23.0.1",
-            "singledispatchmethod==1.0",
+            "singledispatchmethod>=1.0",
         ],
     )
 elif PKG == "fc-guarder":
@@ -105,7 +105,7 @@ elif PKG == "fc-client":
             ]
         },
         install_requires=[
-            "prettytable==2.2.1",
+            "prettytable>=2.2.1",
             "labgrid==23.0.1",
         ],
     )

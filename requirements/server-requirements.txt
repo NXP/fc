@@ -1,6 +1,6 @@
-aiohttp==3.7.4.post0
-flatdict==4.0.1
+aiohttp>=3.7.4.post0
+flatdict>=4.0.1
 lavacli==1.2
 labgrid==23.0.1
-async-lru==1.0.3
-singledispatchmethod==1.0
+async-lru>=1.0.3
+singledispatchmethod>=1.0
