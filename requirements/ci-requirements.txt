@@ -8,6 +8,6 @@ pytest-asyncio>=0.21.0
 pytest-mock>=3.6.1
 requests>=2.26.0
 PyYAML>=5.4.1
-black>=23.1.0
-pylint>=2.12.2
-isort>=5.10.1
+black==23.1.0
+pylint==2.12.2
+isort==5.10.1
