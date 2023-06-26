@@ -2,6 +2,10 @@ FROM python:3.9-buster
 
 WORKDIR /fc
 
+RUN apt-get update; \
+apt-get install -y libcap-dev; \
+rm -rf /var/lib/apt/lists/*;
+
 COPY requirements requirements
 RUN pip install -r requirements/server-requirements.txt
 

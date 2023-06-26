@@ -4,7 +4,6 @@
 #
 # SPDX-License-Identifier: MIT
 
-
 from unittest.mock import MagicMock, call
 
 import pytest
@@ -13,44 +12,21 @@ from fc_client.client import Client
 
 
 class TestClient:
-    @pytest.mark.parametrize("mode", ["normal", "detail"])
-    def test_status(self, mocker, capsys, mode):
+    def test_status(self, capsys):
         class Args:
             resource = "imx8mm-evk-sh11"
             farm_type = "bsp"
             device_type = "imx8mm-evk"
 
-        class Output:
-            def __init__(self):
-                self.text = None
-
-            def __call__(self, mode):
-                if mode == "normal":
-                    self.text = '[["imx8mm-evk-sh11", "bsp", "idle", ""]]'
-                else:
-                    self.text = '[["imx8mm-evk-sh11", "bsp", "idle", "", "[{}]"]]'
-                return self
-
-        mocker.patch(
-            "requests.get",
-            return_value=Output()(mode),
-        )
-
         Client.status(Args)
 
         output = capsys.readouterr()[0]
         assert output in (
-            """+-----------------+------+--------+---------+------+
-|     Resource    | Farm | Status | Comment | Info |
-+-----------------+------+--------+---------+------+
-| imx8mm-evk-sh11 | bsp  |  idle  |         | [{}] |
-+-----------------+------+--------+---------+------+
-""",
-            """+-----------------+------+--------+---------+
-|     Resource    | Farm | Status | Comment |
-+-----------------+------+--------+---------+
-| imx8mm-evk-sh11 | bsp  |  idle  |         |
-+-----------------+------+--------+---------+
+            """MODE: cluster
++----------+------+--------+---------+
+| Resource | Farm | Status | Comment |
++----------+------+--------+---------+
++----------+------+--------+---------+
 """,
         )
 
@@ -58,6 +34,9 @@ class TestClient:
         class Args:
             resource = "imx8mm-evk-sh11"
 
+        mocker.patch(
+            "fc_client.client.Client.fetch_metadata", return_value={"fc": "", "lg": ""}
+        )
         reserve_cmd = mocker.patch("subprocess.Popen", return_value=MagicMock())
         lock_cmd = mocker.patch("subprocess.call", return_value=MagicMock())
         Client.lock(Args)

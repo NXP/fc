@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2021-2022 NXP
+# Copyright 2021-2023 NXP
 #
 # SPDX-License-Identifier: MIT
 
@@ -35,23 +35,25 @@ class Plugin(FCPlugin, Labgrid):
 
         self.seize_cache = {}  # cache to avoid busy seize
 
+        self.logger = logging.getLogger("fc-server")
+
     @safe_cache
     def __update_cache(self, cache_name, job_id, value):
         self.__dict__[cache_name][job_id] += value
 
     async def __labgrid_guard_reservation(self, resource):
-        logging.info("* [start] inject guard reservation for %s", resource)
+        self.logger.info("* [start] inject guard reservation for %s", resource)
         await self.labgrid_create_reservation(resource, priority=-100)
-        logging.info("* [done] inject guard reservation for %s", resource)
+        self.logger.info("* [done] inject guard reservation for %s", resource)
 
     async def __labgrid_fc_reservation(self, driver, resource):
         # let labgrid coordinator has chance to schedule
         await asyncio.sleep(10)
 
-        logging.info("* [start] inject fc reservation for %s", resource)
+        self.logger.info("* [start] inject fc reservation for %s", resource)
         await self.labgrid_create_reservation(resource, priority=100, wait=True)
         await self.labgrid_acquire_place(resource)
-        logging.info("* [done] inject fc reservation for %s", resource)
+        self.logger.info("* [done] inject fc reservation for %s", resource)
 
         await driver.return_resource(resource)
 

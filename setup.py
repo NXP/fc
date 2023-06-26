@@ -60,7 +60,7 @@ if PKG == "fc-server":
     setup(
         **common_setup,
         name="fc-server",
-        packages=find_packages(include=("fc_common", "fc_server*")),
+        packages=find_packages(include=("fc_common", "fc_server*", "fc_server_daemon")),
         package_data={
             "fc_common": ["VERSION"],
             "fc_server": ["config/sample_cfg.yaml", "config/sample_lavacli.yaml"],
@@ -77,6 +77,9 @@ if PKG == "fc-server":
             "lavacli==1.2",
             "labgrid==23.0.1",
             "singledispatchmethod>=1.0",
+            "python-prctl",
+            "etcd3-fc",
+            "protobuf==3.20.3",
         ],
     )
 elif PKG == "fc-guarder":
@@ -95,7 +98,7 @@ elif PKG == "fc-client":
     setup(
         **common_setup,
         name="fc-client",
-        packages=["fc_common", "fc_client"],
+        packages=["fc_common", "fc_client", "fc_client_daemon"],
         package_data={
             "fc_common": ["VERSION"],
         },
@@ -107,5 +110,8 @@ elif PKG == "fc-client":
         install_requires=[
             "prettytable>=2.2.1",
             "labgrid==23.0.1",
+            "python-daemon",
+            "etcd3-fc",
+            "protobuf==3.20.3",
         ],
     )

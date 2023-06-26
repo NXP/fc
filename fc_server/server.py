@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright 2021-2022 NXP
+# Copyright 2021-2023 NXP
 #
 # SPDX-License-Identifier: MIT
 
@@ -21,8 +21,9 @@ ______                                           _    _____                     
 | | | | | (_| | | | | | |  __/\ V  V / (_) | |  |   <| \__/\ (_) | (_) | | | (_| | | | | | (_| | || (_) | |
 \_| |_|  \__,_|_| |_| |_|\___| \_/\_/ \___/|_|  |_|\_\\____/\___/ \___/|_|  \__,_|_|_| |_|\__,_|\__\___/|_|
     """
-    logging.info(product_text)
-    logging.info("VERSION: %s", get_runtime_version("fc-server"))
+    logger = logging.getLogger("fc-server")
+    logger.info(product_text)
+    logger.info("VERSION: %s", get_runtime_version("fc-server"))
 
     Coordinator().start()
 

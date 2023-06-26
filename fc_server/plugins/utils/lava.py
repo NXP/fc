@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2022 NXP
+# Copyright 2022-2023 NXP
 #
 # SPDX-License-Identifier: MIT
 
@@ -31,11 +31,13 @@ class Lava(AsyncRunMixin):
         self.device_description_prefix = "[FC]"
         self.lava_default_description = "Created automatically by LAVA."
 
+        self.logger = logging.getLogger("fc-server")
+
     @singledispatchmethod
     async def lava_maintenance_devices(
         self, *devices, desc=None
     ):  # pylint: disable=no-self-use, unused-argument
-        logging.error("unknown type")
+        self.logger.error("unknown type")
 
     @lava_maintenance_devices.register(str)
     @verify_cmd_results
@@ -115,7 +117,7 @@ class Lava(AsyncRunMixin):
                         queued_jobs_info[1], Loader=yaml.FullLoader
                     )
                 except yaml.YAMLError:
-                    logging.error(traceback.format_exc())
+                    self.logger.error(traceback.format_exc())
 
             queued_jobs += one_batch_queued_jobs
 
@@ -133,7 +135,7 @@ class Lava(AsyncRunMixin):
         try:
             job_info = yaml.load(job_info_text, Loader=yaml.FullLoader)
         except yaml.YAMLError:
-            logging.error(traceback.format_exc())
+            self.logger.error(traceback.format_exc())
             return
 
         return job_info
@@ -145,7 +147,7 @@ class Lava(AsyncRunMixin):
         try:
             device_info = yaml.load(device_info_text, Loader=yaml.FullLoader)
         except yaml.YAMLError:
-            logging.error(traceback.format_exc())
+            self.logger.error(traceback.format_exc())
             return
 
         return device_info
@@ -157,7 +159,7 @@ class Lava(AsyncRunMixin):
         try:
             devices = yaml.load(devices_text, Loader=yaml.FullLoader)
         except yaml.YAMLError:
-            logging.error(traceback.format_exc())
+            self.logger.error(traceback.format_exc())
             return []
 
         return devices

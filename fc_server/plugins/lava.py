@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2021-2022 NXP
+# Copyright 2021-2023 NXP
 #
 # SPDX-License-Identifier: MIT
 
@@ -42,6 +42,8 @@ class Plugin(FCPlugin, Lava):
         self.scheduler_cache = {}  # cache to avoid busy scheduling
         self.seize_cache = {}  # cache to avoid busy seize
         self.job_tags_cache = {}  # cache to store job tags
+
+        self.logger = logging.getLogger("fc-server")
 
     @safe_cache
     def __update_cache(self, cache_name, job_id, value):
@@ -188,15 +190,15 @@ class Plugin(FCPlugin, Lava):
             return False, False
 
         if device_info["health"] == "Maintenance":
-            logging.info("%s default in maintenance.", resource)
+            self.logger.info("%s default in maintenance.", resource)
             return True, False
 
         if device_info["health"] == "Retired":
-            logging.info("%s default in retired.", resource)
+            self.logger.info("%s default in retired.", resource)
             return False, False
 
         # ask default framework disconnect this resource
-        logging.info("Disconnect %s from default framework", resource)
+        self.logger.info("Disconnect %s from default framework", resource)
         desc = await self.__get_device_description(resource)
         if not await self.lava_maintenance_devices(
             resource, desc=f"{self.device_description_prefix}{desc}"
@@ -215,7 +217,7 @@ class Plugin(FCPlugin, Lava):
         """
 
         # ask default framework connect this resource
-        logging.info("Connect %s to default framework", resource)
+        self.logger.info("Connect %s to default framework", resource)
         desc = await self.__get_device_description(resource)
         return await self.lava_online_devices(
             resource, desc=desc.split(self.device_description_prefix)[-1]
@@ -306,7 +308,7 @@ class Plugin(FCPlugin, Lava):
         devices = await self.lava_get_devices()
 
         if not devices:
-            logging.warning(
+            self.logger.warning(
                 "No device fetched from lava server, delay to next scheduling slot"
             )
             return
@@ -345,7 +347,7 @@ class Plugin(FCPlugin, Lava):
 
             # delay issue job to next scheduling slot
             if job_id not in self.job_tags_cache:
-                logging.warning("Job %s delayed to next scheduling slot", job_id)
+                self.logger.warning("Job %s delayed to next scheduling slot", job_id)
                 continue
 
             candidated_available_devices = managed_resources_category["available"].get(
@@ -416,7 +418,7 @@ class Plugin(FCPlugin, Lava):
                 driver.accept_resource(possible_resource, self)
 
             if not driver.is_default_framework(self):
-                logging.info("Online devices to schedule lava jobs.")
+                self.logger.info("Online devices to schedule lava jobs.")
                 await self.lava_online_devices(*possible_resources)
 
             # cleanup

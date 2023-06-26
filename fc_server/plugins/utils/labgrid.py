@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2022 NXP
+# Copyright 2022-2023 NXP
 #
 # SPDX-License-Identifier: MIT
 
@@ -20,7 +20,7 @@ class Labgrid(AsyncRunMixin):
         "Use 'pip3 install labgrid-client' to install labgrid software please.",
     )
     def __init__(self):
-        pass
+        self.logger = logging.getLogger("fc-server")
 
     async def labgrid_get_places(self):
         cmd = "labgrid-client p"
@@ -33,7 +33,7 @@ class Labgrid(AsyncRunMixin):
         try:  # pylint: disable=too-many-nested-blocks
             reservations = yaml.load(reservations_text, Loader=yaml.FullLoader)
         except yaml.YAMLError:
-            logging.error(traceback.format_exc())
+            self.logger.error(traceback.format_exc())
             return
 
         return reservations

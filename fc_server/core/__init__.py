@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2021-2022 NXP
+# Copyright 2021-2023 NXP
 #
 # SPDX-License-Identifier: MIT
 
@@ -8,11 +8,11 @@
 import asyncio
 import os
 
+from fc_common.logger import Logger
 from fc_server.core.config import Config
-from fc_server.core.logger import Logger
 
 fc_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-Logger.init(fc_path)
+Logger.init("fc-server", fc_path)
 Config.parse(fc_path)
 
 

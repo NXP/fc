@@ -1,3 +1,8 @@
+cluster:
+  enable: false
+  instance_name: $instance_name
+  etcd: http://$etcd_ip1:$etcd_port1,http://$etcd_ip2:$etcd_port2,http://$etcd_ip3:$etcd_port3
+
 registered_frameworks:
   - lava
   - labgrid
@@ -14,6 +19,7 @@ frameworks_config:
 priority_scheduler: true
 
 api_server:
+  ip: $fc_server_ip
   port: 8600
 
 managed_resources:

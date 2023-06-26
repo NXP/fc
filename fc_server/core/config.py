@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2021-2022 NXP
+# Copyright 2021-2023 NXP
 #
 # SPDX-License-Identifier: MIT
 
@@ -16,19 +16,21 @@ import yaml
 
 
 class Config:
+    logger = logging.getLogger("fc-server")
+
     @staticmethod
-    def parse(fc_path):
-        config_path = os.environ.get("FC_CONFIG_PATH", os.path.join(fc_path, "config"))
+    def parse(fc_path):  # pylint: disable=too-many-statements
+        config_path = os.environ.get("FC_DATA_PATH", os.path.join(fc_path, "config"))
         cfg_file = os.path.join(config_path, "cfg.yaml")
 
         try:
             with open(cfg_file, "r", encoding="utf-8") as cfg_handle:
                 cfg = yaml.load(cfg_handle, Loader=yaml.FullLoader)
         except FileNotFoundError as error:
-            logging.error(error)
-            logging.error("Put releated configs in %s", config_path)
-            logging.error(
-                "Instead, you could also set `FC_CONFIG_PATH` to override the default path."
+            Config.logger.error(error)
+            Config.logger.error("Put releated configs in %s", config_path)
+            Config.logger.error(
+                "Instead, you could also set `FC_DATA_PATH` to override the default path."
             )
             sys.exit(1)
 
@@ -44,7 +46,7 @@ class Config:
                         resources_handle, Loader=yaml.FullLoader
                     )
             except FileNotFoundError as error:
-                logging.error(error)
+                Config.logger.error(error)
                 sys.exit(1)
 
         Config.raw_managed_resources = raw_managed_resources
@@ -59,10 +61,35 @@ class Config:
                 }
             )
 
+        cluster = cfg.get("cluster", None)
+        if cluster:
+            Config.cluster = {}
+            Config.cluster["enable"] = cluster.get("enable", False)
+            Config.cluster["instance_name"] = cluster.get("instance_name", None)
+            Config.cluster["etcd"] = cluster.get("etcd", None)
+
+            if Config.cluster["enable"] and (
+                not Config.cluster["instance_name"] or not Config.cluster["etcd"]
+            ):
+                Config.logger.error(
+                    "instance_name & etcd is mandatory when enable cluster feature"
+                )
+                sys.exit(1)
+
         Config.registered_frameworks = cfg["registered_frameworks"]
         Config.frameworks_config = cfg["frameworks_config"]
         Config.priority_scheduler = cfg.get("priority_scheduler", False)
+
         Config.api_server = cfg["api_server"]
+        if "port" not in Config.api_server:
+            Config.logger.error("port for api_server is mandatory")
+            sys.exit(1)
+        if "ip" not in Config.api_server:
+            if cluster and Config.cluster["enable"]:
+                Config.logger.error("ip for api_server in cluster mode is mandatory")
+                sys.exit(1)
+            else:
+                Config.api_server["ip"] = "0.0.0.0"
 
         default_framework_strategies = [
             framework
@@ -71,7 +98,9 @@ class Config:
         ]
         default_framework_number = len(default_framework_strategies)
         if default_framework_number > 1:
-            logging.fatal("Fatal: at most one default framework could be specifed!")
+            Config.logger.fatal(
+                "Fatal: at most one default framework could be specifed!"
+            )
             sys.exit(1)
 
         Config.default_framework = (

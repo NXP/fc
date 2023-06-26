@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2021-2022 NXP
+# Copyright 2021-2023 NXP
 #
 # SPDX-License-Identifier: MIT
 
@@ -25,6 +25,7 @@ class ApiSvr(AsyncRunMixin):
     def __init__(self, context):
         self.context = context
         self.external_info_tool = Config.api_server.get("external_info_tool", "")
+        self.logger = logging.getLogger("fc-server")
 
     @staticmethod
     def friendly_status(status):
@@ -153,7 +154,7 @@ class ApiSvr(AsyncRunMixin):
 
         return web.Response(text="\n".join(bookings_text_list))
 
-    async def start(self, port):
+    async def start(self, **svr_args):
         app = web.Application()
         app.add_routes([web.get("/ping", self.pong)])
         app.add_routes([web.get("/booking", self.booking)])
@@ -163,8 +164,8 @@ class ApiSvr(AsyncRunMixin):
         app_runner = web.AppRunner(app)
         await app_runner.setup()
 
-        api_interface = "0.0.0.0"
-        api_port = port
+        api_interface = svr_args["ip"]
+        api_port = svr_args["port"]
         loop = asyncio.get_event_loop()
         await loop.create_server(app_runner.server, api_interface, api_port)
-        logging.info("Api Server ready at http://%s:%d.", api_interface, api_port)
+        self.logger.info("Api Server ready at http://%s:%d.", api_interface, api_port)

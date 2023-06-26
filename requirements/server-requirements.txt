@@ -4,3 +4,6 @@ lavacli==1.2
 labgrid==23.0.1
 async-lru>=1.0.3
 singledispatchmethod>=1.0
+python-prctl
+etcd3-fc
+protobuf==3.20.3

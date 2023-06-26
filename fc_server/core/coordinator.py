@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2021-2022 NXP
+# Copyright 2021-2023 NXP
 #
 # SPDX-License-Identifier: MIT
 
@@ -13,6 +13,7 @@ from importlib import import_module
 from fc_server.core.api_svr import ApiSvr
 from fc_server.core.config import Config
 from fc_server.core.decorators import check_priority_scheduler
+from fc_server_daemon.server_daemon import ServerDaemon
 
 
 class Coordinator:
@@ -23,6 +24,8 @@ class Coordinator:
     # pylint: disable=too-many-instance-attributes
 
     def __init__(self):
+        self.logger = logging.getLogger("fc-server")
+
         self.__framework_plugins = [
             import_module("fc_server.plugins." + framework).Plugin(
                 Config.frameworks_config[framework]
@@ -41,7 +44,7 @@ class Coordinator:
         }
 
         if Config.default_framework:
-            logging.info("Default framework: %s", Config.default_framework)
+            self.logger.info("Default framework: %s", Config.default_framework)
             for framework in self.__framework_plugins:
                 if framework.__module__.split(".")[-1] == Config.default_framework:
                     self.__default_framework_plugin = framework
@@ -50,11 +53,11 @@ class Coordinator:
                     ) or not hasattr(
                         self.__default_framework_plugin, "default_framework_connect"
                     ):
-                        logging.fatal(
+                        self.logger.fatal(
                             "Fatal: specified default framework doesn't realize next interfaces:"
                         )
-                        logging.fatal("  - default_framework_disconnect")
-                        logging.fatal("  - default_framework_connect")
+                        self.logger.fatal("  - default_framework_disconnect")
+                        self.logger.fatal("  - default_framework_connect")
                         sys.exit(1)
                     break
 
@@ -71,20 +74,20 @@ class Coordinator:
         # record timeout task for seized status
         self.seized_status_timeout_records = {}
 
-        logging.info("FC managed resource list:")
-        logging.info(Config.managed_resources)
+        self.logger.info("FC managed resource list:")
+        self.logger.info(Config.managed_resources)
 
     async def __init_frameworks(self):
-        logging.info("Start to init following frameworks:")
+        self.logger.info("Start to init following frameworks:")
 
         init_tasks = []
         for framework in self.__framework_plugins:
-            logging.info("  - %s", framework.__module__)
+            self.logger.info("  - %s", framework.__module__)
             init_tasks += await framework.init(self)
 
         await asyncio.gather(*init_tasks)
 
-        logging.info("Framework coordinator ready.")
+        self.logger.info("Framework coordinator ready.")
 
     async def __managed_issue_resources_connect(self):
         for resource in self.__managed_issue_disconnect_resources:
@@ -109,7 +112,7 @@ class Coordinator:
 
     async def __action(self):
         await self.__init_frameworks()
-        await ApiSvr(self).start(Config.api_server["port"])
+        await ApiSvr(self).start(**Config.api_server)
         await self.__schedule_frameworks()
 
     @property
@@ -205,7 +208,7 @@ class Coordinator:
 
     async def __seized_status_timeout(self, resource):
         await asyncio.sleep(90)
-        logging.info("* %s seized status be reset to fc due to timeout", resource)
+        self.logger.info("* %s seized status be reset to fc due to timeout", resource)
         self.reset_resource(resource)
 
     @check_priority_scheduler()
@@ -217,7 +220,7 @@ class Coordinator:
         if not candidated_resources:
             return []
 
-        logging.info(
+        self.logger.info(
             "[start] seize resource requirement from %s for %s",
             context.__module__.split(".")[-1],
             job_id,
@@ -249,7 +252,7 @@ class Coordinator:
                         candidated_seized_resource,
                         context.__module__.split(".")[-1] + "_seizing",
                     )
-                    logging.info(
+                    self.logger.info(
                         "Force kick off the resource %s.", candidated_seized_resource
                     )
                     await framework.force_kick_off(candidated_seized_resource)
@@ -269,7 +272,7 @@ class Coordinator:
                     break
             low_priority_resources.append(candidated_seized_resource)
 
-        logging.info(
+        self.logger.info(
             "[done] seize resource requirement from %s for %s",
             context.__module__.split(".")[-1],
             job_id,
@@ -279,7 +282,7 @@ class Coordinator:
 
     def __set_resource_status(self, resource, status):
         self.__managed_resources_status[resource] = status
-        logging.info("* %s now belongs to %s", resource, status)
+        self.logger.info("* %s now belongs to %s", resource, status)
 
     async def return_resource(self, resource):
         if (
@@ -312,4 +315,14 @@ class Coordinator:
         self.__set_resource_status(resource, "fc")
 
     def start(self):
+        if Config.cluster["enable"]:
+            daemon_paras = {
+                "etcd": Config.cluster["etcd"],
+                "instance_name": Config.cluster["instance_name"],
+                "fc": f"http://{Config.api_server['ip']}:{Config.api_server['port']}",
+                "lg": Config.frameworks_config["labgrid"]["lg_crossbar"],
+                "devices": Config.managed_resources,
+            }
+            ServerDaemon(daemon_paras).run()
+
         asyncio.run(self.__action())

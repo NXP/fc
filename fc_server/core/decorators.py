@@ -9,6 +9,8 @@ import asyncio
 import logging
 from functools import wraps
 
+logger = logging.getLogger("fc-server")
+
 
 def safe_cache(func):
     @wraps(func)
@@ -69,8 +71,8 @@ def verify_cmd_results(func):
         for result in results:
             device_update_response = result[1]
             if device_update_response != "":
-                logging.error(cmd_list[i])
-                logging.error(device_update_response)
+                logger.error(cmd_list[i])
+                logger.error(device_update_response)
                 return False
             i += 1
         return True

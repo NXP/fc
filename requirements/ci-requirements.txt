@@ -11,3 +11,6 @@ PyYAML>=5.4.1
 black==23.1.0
 pylint==2.12.2
 isort==5.10.1
+python-daemon
+etcd3-fc
+python-prctl

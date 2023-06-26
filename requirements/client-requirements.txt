@@ -1,2 +1,5 @@
 prettytable>=2.2.1
 labgrid==23.0.1
+python-daemon
+etcd3-fc
+protobuf==3.20.3
