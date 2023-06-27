@@ -28,8 +28,8 @@ class AsyncRunMixin:  # pylint: disable=too-few-public-methods
         stdout, stderr = await proc.communicate()
 
         if proc.returncode != 0:
-            print(f"[{cmd!r} exited with {proc.returncode}]")
+            print(f"{cmd!r}:\n  - exited with {proc.returncode}")
         if stderr:
-            print(f"[{cmd!r} stderr]\n{stderr.decode()}")
+            print(f"  - {stderr.decode()}")
 
         return proc.returncode, stdout.decode(), stderr.decode()
