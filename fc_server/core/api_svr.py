@@ -156,6 +156,17 @@ class ApiSvr(AsyncRunMixin):
 
     async def start(self, **svr_args):
         app = web.Application()
+
+        access_logger = logging.getLogger("aiohttp.access")
+        access_logger.setLevel(logging.INFO)
+        handler = logging.StreamHandler()
+        s_format = logging.Formatter(
+            fmt="%(asctime)s %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+        handler.setFormatter(s_format)
+        access_logger.addHandler(handler)
+
         app.add_routes([web.get("/ping", self.pong)])
         app.add_routes([web.get("/booking", self.booking)])
         app.add_routes([web.get("/resource", self.resource_status)])
