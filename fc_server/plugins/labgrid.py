@@ -121,7 +121,14 @@ class Plugin(FCPlugin, Labgrid):
             # inject a low priority system reservation
             await self.__labgrid_guard_reservation(resource)
 
-            await self.labgrid_cancel_reservation(managed_resources_tokens[resource])
+            reservation = managed_resources_tokens.get(resource, None)
+            if reservation:
+                await self.labgrid_cancel_reservation(reservation)
+            else:
+                self.logger.warning(
+                    "No reservation for %s found, this possible result in issue",
+                    resource,
+                )
             await self.labgrid_release_place(resource)
 
             # inject a high priority system reservation to let FC lock the device
