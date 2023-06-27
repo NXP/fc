@@ -21,6 +21,7 @@ from socket import gethostname
 
 import aiohttp
 import prettytable
+import requests
 import yaml
 
 from fc_common import which
@@ -211,6 +212,19 @@ class Client:
     def lock(args):
         resource = args.resource
         metadata = Client.fetch_metadata(resource)
+
+        fc_server = metadata.get("fc", None)
+        if not fc_server:
+            print("Fatal: invalid resource")
+            sys.exit(1)
+        else:
+            url = f"{fc_server}/resource/{resource}"
+            output = requests.get(url)
+            output_data = json.loads(output.text)
+            if output_data[0][3] != "":
+                print("Fatal: non-debuggable resource")
+                sys.exit(1)
+
         os.environ["LG_CROSSBAR"] = metadata["lg"]
 
         if resource:

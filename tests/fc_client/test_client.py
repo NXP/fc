@@ -6,8 +6,6 @@
 
 from unittest.mock import MagicMock, call
 
-import pytest
-
 from fc_client.client import Client
 
 
@@ -34,9 +32,16 @@ class TestClient:
         class Args:
             resource = "imx8mm-evk-sh11"
 
+        class Output:
+            def __init__(self):
+                self.text = '[["imx8mm-evk-sh11", "bsp", "idle", ""]]'
+
         mocker.patch(
-            "fc_client.client.Client.fetch_metadata", return_value={"fc": "", "lg": ""}
+            "fc_client.client.Client.fetch_metadata",
+            return_value={"fc": "foo", "lg": "bar"},
         )
+        mocker.patch("requests.get", return_value=Output())
+
         reserve_cmd = mocker.patch("subprocess.Popen", return_value=MagicMock())
         lock_cmd = mocker.patch("subprocess.call", return_value=MagicMock())
         Client.lock(Args)
