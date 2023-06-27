@@ -65,9 +65,9 @@ class Plugin(FCPlugin, Labgrid):
         if reservations:
             for _, v in reservations.items():  # pylint: disable=invalid-name
                 if v["filters"]["main"] == f"name={resource}":
-                    await self.labgrid_cancel_reservation(v["token"], quiet=True)
+                    await self.labgrid_cancel_reservation(v["token"])
 
-        await self.labgrid_release_place(resource, force=True, quiet=True)
+        await self.labgrid_release_place(resource, force=True)
         await self.labgrid_create_reservation(
             resource, priority=100, wait=True, timeout=20
         )
