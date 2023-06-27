@@ -14,3 +14,4 @@ isort==5.10.1
 python-daemon
 etcd3-fc
 python-prctl
+tenacity

@@ -79,6 +79,7 @@ if PKG == "fc-server":
             "singledispatchmethod>=1.0",
             "python-prctl",
             "etcd3-fc",
+            "tenacity",
             "protobuf==3.20.3",
         ],
     )
@@ -112,6 +113,7 @@ elif PKG == "fc-client":
             "labgrid==23.0.1",
             "python-daemon",
             "etcd3-fc",
+            "tenacity",
             "protobuf==3.20.3",
         ],
     )
