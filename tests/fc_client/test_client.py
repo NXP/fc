@@ -10,7 +10,7 @@ from fc_client.client import Client
 
 
 class TestClient:
-    def test_status(self, capsys):
+    def test_status(self, mocker, capsys):
         class Args:
             resource = "imx8mm-evk-sh11"
             farm_type = "bsp"
@@ -18,7 +18,13 @@ class TestClient:
 
         Client.status(Args)
 
+        mocker.patch(
+            "fc_client.client.Client.fetch_metadata",
+            return_value={"fc": "foo", "lg": "bar"},
+        )
+
         output = capsys.readouterr()[0]
+
         assert output in (
             """MODE: cluster
 +----------+------+--------+---------+
