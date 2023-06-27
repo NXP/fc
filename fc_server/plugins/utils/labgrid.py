@@ -79,3 +79,15 @@ class Labgrid(AsyncRunMixin):
                 token = line.split(":")[-1].strip()
                 break
         return token
+
+    async def labgrid_get_place_owner(self, place):
+        cmd = f"labgrid-client -p {place} show"
+        _, place_info_text, _ = await self._run_cmd(cmd)
+
+        owner = ""
+        place_info_lines = place_info_text.splitlines()
+        for line in place_info_lines:
+            if line.find("acquired:") >= 0:
+                owner = line.split(":")[-1].strip()
+                break
+        return owner

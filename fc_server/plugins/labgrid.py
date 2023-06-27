@@ -73,6 +73,12 @@ class Plugin(FCPlugin, Labgrid):
         )
         await self.labgrid_acquire_place(resource)
 
+        # verify init effect
+        owner = await self.labgrid_get_place_owner(resource)
+        if owner != "fc/fc":
+            self.logger.info("- init %s failure", resource)
+            self.managed_resources.remove(resource)
+
     async def force_kick_off(self, resource):
         """
         Allow coordinator to seize labgrid resource
@@ -190,5 +196,6 @@ class Plugin(FCPlugin, Labgrid):
             for place in places.splitlines()
             if place.strip() in driver.managed_resources
         ]
+        candidated_init_resources = self.managed_resources.copy()
 
-        return [self.__labgrid_init(resource) for resource in self.managed_resources]
+        return [self.__labgrid_init(resource) for resource in candidated_init_resources]
