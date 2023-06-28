@@ -57,8 +57,8 @@ class Client:
         else:
             print("MODE: cluster")
 
-        server_address = "/tmp/fc_client_daemon.sock"
-        if not os.path.exists("/tmp/fc_client_daemon.pid"):
+        server_address = "/tmp/fc/fc_client_daemon.sock"
+        if not os.path.exists("/tmp/fc/fc_client_daemon.pid"):
             with suppress(FileNotFoundError):
                 os.remove(server_address)
             client_daemon = os.path.join(

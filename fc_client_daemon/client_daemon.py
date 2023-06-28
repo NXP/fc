@@ -41,7 +41,7 @@ class ClientDaemon:
 
         self.lock = Lock()
 
-        self.ipc_server_address = "/tmp/fc_client_daemon.sock"
+        self.ipc_server_address = "/tmp/fc/fc_client_daemon.sock"
 
     def watch_locks_callback(self, event):
         try:
@@ -181,7 +181,7 @@ if __name__ == "__main__":
     logger_io = [handler.stream for handler in logger.handlers]
     with daemon.DaemonContext(
         umask=0o002,
-        pidfile=pidfile.TimeoutPIDLockFile("/tmp/fc_client_daemon.pid"),
+        pidfile=pidfile.TimeoutPIDLockFile("/tmp/fc/fc_client_daemon.pid"),
         files_preserve=logger_io,
     ) as context:
         try:
