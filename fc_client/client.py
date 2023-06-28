@@ -119,17 +119,17 @@ class Client:
             sys.exit(1)
 
         if len(extras) == 1:
-            print(f"remove {extras[0]}")
+            print(f"{extras[0]} removed")
             cfg = Config.load_cfg()
             cfg.pop(extras[0], "")
             Config.save_cfg(cfg)
         elif len(extras) == 2:
-            print("set")
             cfg = Config.load_cfg()
             cfg.update({extras[0]: extras[1]})
             Config.save_cfg(cfg)
+            print("Init done")
         else:
-            print("wrong")
+            print("Wrong command")
 
     @staticmethod
     def cluster_info(args):
