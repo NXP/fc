@@ -178,6 +178,10 @@ if __name__ == "__main__":
     logger = logging.getLogger("fc_client_daemon")
     logger.info("Start fc-client-daemon")
 
+    tmp_fc_path = "/tmp/fc"
+    if not os.path.exists(tmp_fc_path):
+        os.makedirs(tmp_fc_path)
+
     logger_io = [handler.stream for handler in logger.handlers]
     with daemon.DaemonContext(
         umask=0o002,
