@@ -13,7 +13,7 @@ import yaml
 class Config:
     @staticmethod
     def save_cfg(cfg):
-        cfg_path = os.path.expanduser(os.environ.get("FC_CFG_PATH", "~/.config"))
+        cfg_path = os.path.expanduser(os.environ.get("FC_CLIENT_CFG_PATH", "~/.fc/client_cfg"))
         cfg_yaml = os.path.join(cfg_path, "fc.yaml")
         os.makedirs(cfg_path, exist_ok=True)
 
@@ -22,7 +22,7 @@ class Config:
 
     @staticmethod
     def load_cfg():
-        cfg_path = os.path.expanduser(os.environ.get("FC_CFG_PATH", "~/.config"))
+        cfg_path = os.path.expanduser(os.environ.get("FC_CLIENT_CFG_PATH", "~/.fc/client_cfg"))
         cfg_yaml = os.path.join(cfg_path, "fc.yaml")
 
         try:
