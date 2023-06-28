@@ -173,7 +173,7 @@ class ClientDaemon:
 
 
 if __name__ == "__main__":
-    os.environ["FC_DATA_PATH"] = "/tmp"
+    os.environ["FC_CONFIG_PATH"] = "/tmp"
     Logger.init(
         "fc-client-daemon",
         fc_path="",
