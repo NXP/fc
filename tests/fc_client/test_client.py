@@ -16,18 +16,17 @@ class TestClient:
             farm_type = "bsp"
             device_type = "imx8mm-evk"
 
-        Client.status(Args)
-
         mocker.patch(
             "fc_client.client.Client.fetch_metadata",
-            return_value={"fc": "foo", "lg": "bar"},
+            return_value={},
         )
+
+        Client.status(Args)
 
         output = capsys.readouterr()[0]
 
         assert output in (
-            """MODE: cluster
-+----------+------+--------+---------+
+            """+----------+------+--------+---------+
 | Resource | Farm | Status | Comment |
 +----------+------+--------+---------+
 +----------+------+--------+---------+
