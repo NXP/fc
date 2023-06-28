@@ -11,6 +11,7 @@ import logging
 import os
 import signal
 import socket
+import sys
 from threading import Lock
 
 import daemon
@@ -27,6 +28,10 @@ class ClientDaemon:
         self.logger = logging.getLogger("fc_client_daemon")
 
         etcd_url = Config.load_cfg().get("etcd")
+        if not etcd_url:
+            self.logger.info("Fatal: please init your client first")
+            sys.exit(1)
+
         self.etcd = Etcd(etcd_url)
         self.logger.info("Current endpoint: %s", self.etcd()._current_endpoint_label)
 
