@@ -2,4 +2,8 @@
 
 set -x
 
+# prctl depends on libcap development headers
+apt-get update
+apt-get install -y libcap-dev
+
 pip3 install -r requirements/ci-requirements.txt
