@@ -24,7 +24,7 @@ class Coordinator:
     # pylint: disable=too-many-instance-attributes
 
     def __init__(self):
-        self.logger = logging.getLogger("fc-server")
+        self.logger = logging.getLogger("fc_server")
 
         self.__framework_plugins = [
             import_module("fc_server.plugins." + framework).Plugin(

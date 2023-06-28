@@ -16,7 +16,7 @@ import yaml
 
 
 class Config:
-    logger = logging.getLogger("fc-server")
+    logger = logging.getLogger("fc_server")
 
     @staticmethod
     def parse(fc_path):  # pylint: disable=too-many-statements

@@ -12,7 +12,7 @@ from fc_common.logger import Logger
 from fc_server.core.config import Config
 
 fc_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-Logger.init("fc-server", fc_path)
+Logger.init("fc_server", "fc_server.log")
 Config.parse(fc_path)
 
 

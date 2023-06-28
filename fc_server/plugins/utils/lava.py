@@ -31,7 +31,7 @@ class Lava(AsyncRunMixin):
         self.device_description_prefix = "[FC]"
         self.lava_default_description = "Created automatically by LAVA."
 
-        self.logger = logging.getLogger("fc-server")
+        self.logger = logging.getLogger("fc_server")
 
     @singledispatchmethod
     async def lava_maintenance_devices(

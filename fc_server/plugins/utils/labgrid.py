@@ -20,7 +20,7 @@ class Labgrid(AsyncRunMixin):
         "Use 'pip3 install labgrid-client' to install labgrid software please.",
     )
     def __init__(self):
-        self.logger = logging.getLogger("fc-server")
+        self.logger = logging.getLogger("fc_server")
 
     async def labgrid_get_places(self):
         cmd = "labgrid-client p"

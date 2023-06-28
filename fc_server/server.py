@@ -21,7 +21,7 @@ ______                                           _    _____                     
 | | | | | (_| | | | | | |  __/\ V  V / (_) | |  |   <| \__/\ (_) | (_) | | | (_| | | | | | (_| | || (_) | |
 \_| |_|  \__,_|_| |_| |_|\___| \_/\_/ \___/|_|  |_|\_\\____/\___/ \___/|_|  \__,_|_|_| |_|\__,_|\__\___/|_|
     """
-    logger = logging.getLogger("fc-server")
+    logger = logging.getLogger("fc_server")
     logger.info(product_text)
     logger.info("VERSION: %s", get_runtime_version("fc-server"))
 

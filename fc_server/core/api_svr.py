@@ -25,7 +25,7 @@ class ApiSvr(AsyncRunMixin):
     def __init__(self, context):
         self.context = context
         self.external_info_tool = Config.api_server.get("external_info_tool", "")
-        self.logger = logging.getLogger("fc-server")
+        self.logger = logging.getLogger("fc_server")
 
     @staticmethod
     def friendly_status(status):

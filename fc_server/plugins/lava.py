@@ -43,7 +43,7 @@ class Plugin(FCPlugin, Lava):
         self.seize_cache = {}  # cache to avoid busy seize
         self.job_tags_cache = {}  # cache to store job tags
 
-        self.logger = logging.getLogger("fc-server")
+        self.logger = logging.getLogger("fc_server")
 
     @safe_cache
     def __update_cache(self, cache_name, job_id, value):

@@ -7,7 +7,6 @@
 
 import logging
 import multiprocessing
-import os
 import signal
 import time
 
@@ -20,13 +19,12 @@ from fc_common.logger import Logger
 class ServerDaemon:
     def __init__(self, daemon_paras):
         self.daemon_paras = daemon_paras
-        self.logger = logging.getLogger("fc-server-daemon")
+        self.logger = logging.getLogger("fc_server_daemon")
 
     def __action(self):
         prctl.set_pdeathsig(signal.SIGHUP)  # pylint: disable=no-member
 
-        fc_path = os.path.abspath(os.path.dirname(__file__))
-        Logger.init("fc-server-daemon", fc_path, "daemon.log", log_type="file_only")
+        Logger.init("fc_server_daemon", "fc_server_daemon.log", log_type="file_only")
 
         self.logger.info("Start fc-server-daemon")
         self.logger.info(self.daemon_paras)

@@ -24,7 +24,7 @@ from fc_common.logger import Logger
 class ClientDaemon:
     # pylint: disable=too-many-instance-attributes
     def __init__(self):
-        self.logger = logging.getLogger("fc-client-daemon")
+        self.logger = logging.getLogger("fc_client_daemon")
 
         etcd_url = Config.load_cfg().get("etcd")
         self.etcd = Etcd(etcd_url)
@@ -173,15 +173,9 @@ class ClientDaemon:
 
 
 if __name__ == "__main__":
-    os.environ["FC_CONFIG_PATH"] = "/tmp"
-    Logger.init(
-        "fc-client-daemon",
-        fc_path="",
-        log_name="fc_client_daemon.log",
-        log_type="file_only",
-    )
+    Logger.init("fc_client_daemon", "fc_client_daemon.log", log_type="file_only")
 
-    logger = logging.getLogger("fc-client-daemon")
+    logger = logging.getLogger("fc_client_daemon")
     logger.info("Start fc-client-daemon")
 
     logger_io = [handler.stream for handler in logger.handlers]

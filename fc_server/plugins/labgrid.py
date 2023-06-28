@@ -35,7 +35,7 @@ class Plugin(FCPlugin, Labgrid):
 
         self.seize_cache = {}  # cache to avoid busy seize
 
-        self.logger = logging.getLogger("fc-server")
+        self.logger = logging.getLogger("fc_server")
 
     @safe_cache
     def __update_cache(self, cache_name, job_id, value):

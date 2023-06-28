@@ -13,8 +13,8 @@ import os
 
 class Logger:
     @staticmethod
-    def init(logger_name, fc_path, log_name="run.log", log_type="both"):
-        log_path = os.environ.get("FC_CONFIG_PATH", os.path.join(fc_path, "log"))
+    def init(logger_name, log_name="run.log", log_type="both"):
+        log_path = os.path.expanduser(os.environ.get("FC_LOG_PATH", "~/.fc/log"))
         log_file = os.path.join(log_path, log_name)
 
         if not os.path.exists(log_path):

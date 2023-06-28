@@ -9,7 +9,7 @@ import asyncio
 import logging
 from functools import wraps
 
-logger = logging.getLogger("fc-server")
+logger = logging.getLogger("fc_server")
 
 
 def safe_cache(func):
