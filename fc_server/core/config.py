@@ -20,7 +20,9 @@ class Config:
 
     @staticmethod
     def parse(fc_path):  # pylint: disable=too-many-statements
-        config_path = os.environ.get("FC_SERVER_CFG_PATH", os.path.join(fc_path, "config"))
+        config_path = os.environ.get(
+            "FC_SERVER_CFG_PATH", os.path.join(fc_path, "config")
+        )
         cfg_file = os.path.join(config_path, "cfg.yaml")
 
         try:
