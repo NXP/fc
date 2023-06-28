@@ -12,7 +12,7 @@ import sys
 import pytest
 
 cfg_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "config"))
-os.environ["FC_CONFIG_PATH"] = cfg_path
+os.environ["FC_SERVER_CFG_PATH"] = cfg_path
 
 # pylint: disable=wrong-import-position
 from fc_server.core.coordinator import Coordinator
@@ -20,9 +20,9 @@ from fc_server.core.coordinator import Coordinator
 
 @pytest.fixture
 def remove_config_path():
-    del os.environ["FC_CONFIG_PATH"]
+    del os.environ["FC_SERVER_CFG_PATH"]
     yield
-    os.environ["FC_CONFIG_PATH"] = cfg_path
+    os.environ["FC_SERVER_CFG_PATH"] = cfg_path
 
 
 @pytest.fixture
