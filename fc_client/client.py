@@ -31,6 +31,24 @@ from fc_common.version import get_runtime_version
 
 class Client:
     @staticmethod
+    def mode_check():
+        fc_server = os.environ.get("FC_SERVER", None)
+        lg_crossbar = os.environ.get("LG_CROSSBAR", None)
+
+        if fc_server and lg_crossbar:
+            print("MODE: single")
+            Client.mode = "single"
+        elif fc_server:
+            print("MODE: cluster (LG_CROSSBAR not set, fallback to cluster mode)")
+            Client.mode = "cluster"
+        elif lg_crossbar:
+            print("MODE: cluster (FC_SERVER not set, fallback to cluster mode)")
+            Client.mode = "cluster"
+        else:
+            print("MODE: cluster")
+            Client.mode = "cluster"
+
+    @staticmethod
     def labgrid_call(args, extras):
         metadata = Client.fetch_metadata(args.resource)
         os.environ["LG_CROSSBAR"] = metadata["lg"]
@@ -39,23 +57,23 @@ class Client:
 
     @staticmethod
     def fetch_metadata(filters):
-        fc_server = os.environ.get("FC_SERVER", None)
-        lg_crossbar = os.environ.get("LG_CROSSBAR", None)
-
         # single mode
-        if fc_server and lg_crossbar:
-            print("MODE: single")
+        if Client.mode == "single":
+            fc_server = os.environ.get("FC_SERVER", None)
+            lg_crossbar = os.environ.get("LG_CROSSBAR", None)
+
             if filters == "all":
                 return {"default": {"fc": fc_server, "lg": lg_crossbar}}
             return {"fc": fc_server, "lg": lg_crossbar}
 
         # cluster mode
-        if fc_server:
-            print("MODE: cluster (LG_CROSSBAR not set, fallback to cluster mode)")
-        elif lg_crossbar:
-            print("MODE: cluster (FC_SERVER not set, fallback to cluster mode)")
-        else:
-            print("MODE: cluster")
+        def check_etcd_cfg():
+            etcd_url = Config.load_cfg().get("etcd")
+            if not etcd_url:
+                print("Fatal: please init cluster settings for your client first")
+                sys.exit(1)
+
+        check_etcd_cfg()
 
         server_address = "/tmp/fc/fc_client_daemon.sock"
         if not os.path.exists("/tmp/fc/fc_client_daemon.pid"):
@@ -317,6 +335,8 @@ def main():
         f"FC-CLIENT VERSION: {get_runtime_version('fc-client')}, "
         "HOMEPAGE: https://fc.readthedocs.org/"
     )
+
+    Client.mode_check()
 
     parser = argparse.ArgumentParser()
     parser.set_defaults(func=lambda args: parser.print_help())

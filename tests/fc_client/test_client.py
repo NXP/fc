@@ -62,6 +62,11 @@ class TestClient:
         class Args:
             resource = "imx8mm-evk-sh11"
 
+        mocker.patch(
+            "fc_client.client.Client.fetch_metadata",
+            return_value={"fc": "foo", "lg": "bar"},
+        )
+
         mocker.patch("os.environ.get", return_value="test")
         mocker.patch(
             "subprocess.getstatusoutput",
