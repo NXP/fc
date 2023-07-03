@@ -8,3 +8,4 @@ python3 $ROOT_HOME/setup.py clean
 python3 $ROOT_HOME/setup.py sdist fc-server
 python3 $ROOT_HOME/setup.py sdist fc-guarder
 python3 $ROOT_HOME/setup.py sdist fc-client
+python3 $ROOT_HOME/setup.py sdist fc-client-docker

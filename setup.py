@@ -117,3 +117,19 @@ elif PKG == "fc-client":
             "protobuf==3.20.3",
         ],
     )
+elif PKG == "fc-client-docker":
+    setup(
+        **common_setup,
+        name="fc-client-docker",
+        packages=["fc_common", "fc_client_docker"],
+        package_data={
+            "fc_common": ["VERSION"],
+            "fc_client_docker": ["fc_client_docker"],
+        },
+        entry_points={
+            "console_scripts": [
+                "fc-client-docker = fc_client_docker:main",
+            ]
+        },
+        python_requires=">=3",
+    )
