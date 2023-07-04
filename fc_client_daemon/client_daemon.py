@@ -168,15 +168,21 @@ class ClientDaemon:
 
 
 if __name__ == "__main__":
-    Logger.init("fc_client_daemon", "fc_client_daemon.log", log_type="file_only")
-
-    logger = logging.getLogger("fc_client_daemon")
-    logger.info("Start fc-client-daemon")
-
     TMP_FC_PATH = "/tmp/fc"
     if not os.path.exists(TMP_FC_PATH):
         os.makedirs(TMP_FC_PATH)
         os.chmod(TMP_FC_PATH, 0o777)
+
+    os.environ["FC_LOG_PATH"] = TMP_FC_PATH
+    Logger.init(
+        "fc_client_daemon",
+        "fc_client_daemon.log",
+        log_type="file_only",
+        log_file_permission=0o777,
+    )
+
+    logger = logging.getLogger("fc_client_daemon")
+    logger.info("Start fc-client-daemon")
 
     logger_io = [handler.stream for handler in logger.handlers]
     with daemon.DaemonContext(

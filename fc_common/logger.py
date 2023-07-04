@@ -7,13 +7,16 @@
 
 import logging
 import os
+from contextlib import suppress
 
 # pylint: disable=too-few-public-methods
 
 
 class Logger:
     @staticmethod
-    def init(logger_name, log_name="run.log", log_type="both"):
+    def init(
+        logger_name, log_name="run.log", log_type="both", log_file_permission=None
+    ):
         log_path = os.path.expanduser(os.environ.get("FC_LOG_PATH", "~/.fc/log"))
         log_file = os.path.join(log_path, log_name)
 
@@ -25,6 +28,9 @@ class Logger:
 
         s_handler = logging.StreamHandler()
         f_handler = logging.FileHandler(log_file)
+        if log_file_permission:
+            with suppress(Exception):
+                os.chmod(log_file, log_file_permission)
 
         s_format = logging.Formatter(
             fmt="%(asctime)s %(message)s",
