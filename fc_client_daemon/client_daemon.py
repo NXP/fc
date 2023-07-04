@@ -42,7 +42,7 @@ class ClientDaemon:
 
         self.lock = Lock()
 
-        self.ipc_server_address = "/tmp/fc/fc_client_daemon.sock"
+        self.ipc_server_address = "\0/tmp/fc/fc_client_daemon.sock"
 
     def watch_locks_callback(self, event):
         try:
@@ -140,12 +140,6 @@ class ClientDaemon:
     def start_ipc_server(self):
         self.logger.info("Start ipc server.")
 
-        try:
-            os.unlink(self.ipc_server_address)
-        except OSError:
-            if os.path.exists(self.ipc_server_address):
-                raise
-
         server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         server.bind(self.ipc_server_address)
         server.listen(3)
@@ -182,6 +176,7 @@ if __name__ == "__main__":
     TMP_FC_PATH = "/tmp/fc"
     if not os.path.exists(TMP_FC_PATH):
         os.makedirs(TMP_FC_PATH)
+        os.chmod(TMP_FC_PATH, 0o777)
 
     logger_io = [handler.stream for handler in logger.handlers]
     with daemon.DaemonContext(

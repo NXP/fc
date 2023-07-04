@@ -15,7 +15,6 @@ import socket
 import subprocess
 import sys
 import time
-from contextlib import suppress
 from getpass import getuser
 from socket import gethostname
 
@@ -75,10 +74,7 @@ class Client:
 
         check_etcd_cfg()
 
-        server_address = "/tmp/fc/fc_client_daemon.sock"
         if not os.path.exists("/tmp/fc/fc_client_daemon.pid"):
-            with suppress(FileNotFoundError):
-                os.remove(server_address)
             client_daemon = os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
                 "..",
@@ -87,21 +83,21 @@ class Client:
             )
             subprocess.run(["python3", client_daemon], check=True)
 
+        server_address = "\0/tmp/fc/fc_client_daemon.sock"
         retries = 0
-        max_retries = 100
-        while not os.path.exists(server_address):
-            if retries == max_retries:
-                print("Fatal: fc_client_daemon not available")
-                sys.exit(1)
-            time.sleep(0.1)
-            retries += 1
-
+        max_retries = 50
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        try:
-            sock.connect(server_address)
-        except socket.error as msg:
-            print(msg)
-            sys.exit(1)
+        while True:
+            try:
+                sock.connect(server_address)
+                break
+            except socket.error as msg:
+                if retries == max_retries:
+                    print("Fatal: fc_client_daemon not available")
+                    print(msg)
+                    sys.exit(1)
+                time.sleep(0.1)
+                retries += 1
 
         # {"require": "all"} or {"require": "imx8mm-evk-sh99"}
         msg = {"require": filters}
