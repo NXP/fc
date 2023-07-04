@@ -142,7 +142,7 @@ class ClientDaemon:
 
         server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         server.bind(self.ipc_server_address)
-        server.listen(3)
+        server.listen()
 
         while True:
             client_socket, _ = server.accept()
