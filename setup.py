@@ -8,10 +8,12 @@
 
 import os
 import pathlib
+import signal
 import sys
 
 import pkg_resources
 from setuptools import Command, find_packages, setup
+from setuptools.command.install import install
 
 from fc_common.version import get_package_version
 
@@ -29,6 +31,19 @@ class CleanCommand(Command):
 
     def run(self):  # pylint: disable=no-self-use
         os.system("rm -vrf ./build ./dist ./*.pyc ./*.tgz ./*.egg-info ./__pycache__")
+
+
+class InstallCommand(install):
+    """Custom install command to clear old client daemon"""
+
+    def run(self):
+        super().run()
+
+        pid_file = "/tmp/fc/fc_client_daemon.pid"
+        if os.path.exists(pid_file):
+            pid_path = pathlib.Path(pid_file)
+            pid = int(pid_path.read_text(encoding="utf-8").rstrip())
+            os.kill(pid, signal.SIGINT)
 
 
 def get_project_name():
@@ -96,6 +111,7 @@ elif PKG == "fc-guarder":
         install_requires=[f"fc-server=={get_package_version()}"],
     )
 elif PKG == "fc-client":
+    common_setup["cmdclass"].update({"install": InstallCommand})
     setup(
         **common_setup,
         name="fc-client",
