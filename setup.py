@@ -130,6 +130,7 @@ elif PKG == "fc-client":
             "python-daemon",
             "etcd3-fc",
             "tenacity",
+            "aiohttp",
             "protobuf==3.20.3",
         ],
     )
