@@ -90,8 +90,6 @@ class Config:
             if cluster and Config.cluster["enable"]:
                 Config.logger.error("ip for api_server in cluster mode is mandatory")
                 sys.exit(1)
-            else:
-                Config.api_server["ip"] = "0.0.0.0"
 
         default_framework_strategies = [
             framework

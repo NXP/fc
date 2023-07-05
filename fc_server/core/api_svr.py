@@ -175,7 +175,7 @@ class ApiSvr(AsyncRunMixin):
         app_runner = web.AppRunner(app)
         await app_runner.setup()
 
-        api_interface = svr_args["ip"]
+        api_interface = "0.0.0.0"
         api_port = svr_args["port"]
         loop = asyncio.get_event_loop()
         await loop.create_server(app_runner.server, api_interface, api_port)
