@@ -14,5 +14,6 @@ RUN chmod +x /bin/fc-client
 
 COPY fc_common fc_common
 COPY fc_client fc_client
+COPY fc_client_daemon fc_client_daemon
 
 WORKDIR /root
