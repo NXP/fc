@@ -7,6 +7,7 @@
 
 import logging
 import multiprocessing
+import os
 import signal
 import time
 
@@ -19,6 +20,7 @@ from fc_common.logger import Logger
 class ServerDaemon:
     def __init__(self, daemon_paras):
         self.daemon_paras = daemon_paras
+        self.server_daemon = None
         self.logger = logging.getLogger("fc_server_daemon")
 
     def __action(self):
@@ -61,6 +63,12 @@ class ServerDaemon:
 
             time.sleep(30)
 
+    def handler(self, *_):
+        if self.server_daemon:
+            os.kill(self.server_daemon.pid, signal.SIGINT)
+
     def run(self):
-        server_daemon = multiprocessing.Process(target=self.__action, daemon=True)
-        server_daemon.start()
+        self.server_daemon = multiprocessing.Process(target=self.__action, daemon=True)
+        self.server_daemon.start()
+
+        signal.signal(signal.SIGTERM, self.handler)
