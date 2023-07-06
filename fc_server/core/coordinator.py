@@ -319,7 +319,7 @@ class Coordinator:
             daemon_paras = {
                 "etcd": Config.cluster["etcd"],
                 "instance_name": Config.cluster["instance_name"],
-                "fc": f"http://{Config.api_server['ip']}:{Config.api_server['port']}",
+                "fc": f"http://{Config.api_server['ip']}:{Config.api_server['publish_port']}",
                 "lg": Config.frameworks_config["labgrid"]["lg_crossbar"],
                 "devices": Config.managed_resources,
             }

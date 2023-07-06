@@ -86,6 +86,8 @@ class Config:
         if "port" not in Config.api_server:
             Config.logger.error("port for api_server is mandatory")
             sys.exit(1)
+        if "publish_port" not in Config.api_server:
+            Config.api_server["publish_port"] = Config.api_server["port"]
         if "ip" not in Config.api_server:
             if cluster and Config.cluster["enable"]:
                 Config.logger.error("ip for api_server in cluster mode is mandatory")
