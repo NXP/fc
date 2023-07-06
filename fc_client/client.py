@@ -193,8 +193,11 @@ class Client:
                 url = f"{fc_server}/resource"
 
             async with aiohttp.ClientSession() as session:
-                async with session.get(url) as response:
-                    output = await response.text()
+                try:
+                    async with session.get(url) as response:
+                        output = await response.text()
+                except Exception:  # pylint: disable=broad-except
+                    return []
 
             return json.loads(output)
 
