@@ -32,4 +32,4 @@ class TestConfig:
             },
         }
         assert Config.priority_scheduler
-        assert Config.api_server == {"port": 8600}
+        assert Config.api_server == {"port": 8600, "publish_port": 8600}
