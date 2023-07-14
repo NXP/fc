@@ -61,8 +61,8 @@ class ApiSvr(AsyncRunMixin):
                 else:
                     item.append("")
 
-                # fetch external resource info if needed
                 if self.external_info_tool:
+                    # fetch external resource info if needed
                     fc_resource = res
                     fc_farm_type = Config.managed_resources_farm_types.get(res, "")
                     template = Template(self.external_info_tool)
@@ -75,6 +75,8 @@ class ApiSvr(AsyncRunMixin):
                         item.append(info)
                     else:
                         item.append("NA")
+                else:
+                    item.append([])
 
                 resources_info.append(item)
         else:
