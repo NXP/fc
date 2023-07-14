@@ -47,35 +47,36 @@ class ApiSvr(AsyncRunMixin):
 
         resources_info = []
         if res:
-            item = []
-            item.append(res)
-            item.append(Config.managed_resources_farm_types.get(res, ""))
-            item.append(
-                ApiSvr.friendly_status(
-                    self.context.managed_resources_status.get(res, "")
+            if res in Config.managed_resources:
+                item = []
+                item.append(res)
+                item.append(Config.managed_resources_farm_types.get(res, ""))
+                item.append(
+                    ApiSvr.friendly_status(
+                        self.context.managed_resources_status.get(res, "")
+                    )
                 )
-            )
-            if res not in labgrid_managed_resources:
-                item.append("non-debuggable")
-            else:
-                item.append("")
-
-            # fetch external resource info if needed
-            if self.external_info_tool:
-                fc_resource = res
-                fc_farm_type = Config.managed_resources_farm_types.get(res, "")
-                template = Template(self.external_info_tool)
-                tool_command = template.substitute(
-                    {"fc_resource": fc_resource, "fc_farm_type": fc_farm_type}
-                )
-                ret, info, _ = await self._run_cmd(tool_command)
-
-                if ret == 0:
-                    item.append(info)
+                if res not in labgrid_managed_resources:
+                    item.append("non-debuggable")
                 else:
-                    item.append("NA")
+                    item.append("")
 
-            resources_info.append(item)
+                # fetch external resource info if needed
+                if self.external_info_tool:
+                    fc_resource = res
+                    fc_farm_type = Config.managed_resources_farm_types.get(res, "")
+                    template = Template(self.external_info_tool)
+                    tool_command = template.substitute(
+                        {"fc_resource": fc_resource, "fc_farm_type": fc_farm_type}
+                    )
+                    ret, info, _ = await self._run_cmd(tool_command)
+
+                    if ret == 0:
+                        item.append(info)
+                    else:
+                        item.append("NA")
+
+                resources_info.append(item)
         else:
             params = request.rel_url.query
             farm_type = params.get("farmtype", "")
