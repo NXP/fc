@@ -80,6 +80,7 @@ class ApiSvr(AsyncRunMixin):
             params = request.rel_url.query
             farm_type = params.get("farmtype", "")
             device_type = params.get("devicetype", "")
+            peripheral_info = params.get("peripheralinfo", "")
 
             if device_type and farm_type:
                 scope = Config.raw_managed_resources.get(farm_type, {}).get(
@@ -118,16 +119,29 @@ class ApiSvr(AsyncRunMixin):
                     fc_farm_type = Config.managed_resources_farm_types.get(resource, "")
                     template = Template(self.external_info_tool)
                     tool_command = template.substitute(
-                        {"fc_resource": fc_resource, "fc_farm_type": fc_farm_type}
+                        {
+                            "fc_resource": fc_resource,
+                            "fc_farm_type": fc_farm_type,
+                            "fc_peripheral_info": peripheral_info,
+                        }
                     )
                     tool_command_list.append(self._run_cmd(tool_command))
 
             external_info_list = await asyncio.gather(*tool_command_list)
+            fc_not_match_list = []
             for index, value in enumerate(external_info_list):
                 if value[0] == 0:
                     resources_info[index].append(value[1])
+                    if value[1].strip() == "FC_NOT_MATCH":
+                        fc_not_match_list.append(index)
                 else:
                     resources_info[index].append("NA")
+
+            resources_info = [
+                item
+                for index, item in enumerate(resources_info)
+                if index not in fc_not_match_list
+            ]
 
         return web.json_response(resources_info)
 

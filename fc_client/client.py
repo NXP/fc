@@ -15,6 +15,7 @@ import socket
 import subprocess
 import sys
 import time
+import urllib.parse
 from getpass import getuser
 from socket import gethostname
 
@@ -177,20 +178,23 @@ class Client:
             specified_resource = args.resource
             specified_farm_type = args.farm_type
             specified_device_type = args.device_type
+            specified_peripheral_info = args.peripheral_info
 
+            url = f"{fc_server}/resource"
             if specified_resource:
-                url = f"{fc_server}/resource/{specified_resource}"
-            elif specified_farm_type and specified_device_type:
-                url = (
-                    f"{fc_server}/resource"
-                    f"?farmtype={specified_farm_type}&devicetype={specified_device_type}"
-                )
-            elif specified_farm_type:
-                url = f"{fc_server}/resource?farmtype={specified_farm_type}"
-            elif specified_device_type:
-                url = f"{fc_server}/resource?devicetype={specified_device_type}"
-            else:
-                url = f"{fc_server}/resource"
+                url += f"/{specified_resource}"
+
+            query = {}
+            if specified_farm_type:
+                query["farmtype"] = specified_farm_type
+            if specified_device_type:
+                query["devicetype"] = specified_device_type
+            if specified_peripheral_info:
+                query["peripheralinfo"] = specified_peripheral_info
+            query_string = urllib.parse.urlencode(query)
+
+            if query_string:
+                url += f"?{query_string}"
 
             async with aiohttp.ClientSession() as session:
                 try:
@@ -344,6 +348,7 @@ def main():
     )
     parser.add_argument("-f", "--farm-type", type=str, help="farm type")
     parser.add_argument("-d", "--device-type", type=str, help="device type")
+    parser.add_argument("-i", "--peripheral-info", type=str, help="peripheral info")
 
     args, extras = parser.parse_known_args()
 
