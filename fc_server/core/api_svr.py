@@ -130,15 +130,25 @@ class ApiSvr(AsyncRunMixin):
                     )
                     tool_command_list.append(self._run_cmd(tool_command))
 
-            external_info_list = await asyncio.gather(*tool_command_list)
             fc_not_match_list = []
-            for index, value in enumerate(external_info_list):
-                if value[0] == 0:
-                    resources_info[index].append(value[1])
-                    if value[1].strip() == "FC_NOT_MATCH":
+            if self.external_info_tool and device_type:
+                external_info_list = await asyncio.gather(*tool_command_list)
+                for index, value in enumerate(external_info_list):
+                    if value[0] == 0:
+                        resources_info[index].append(value[1])
+                        if value[1].strip() == "FC_NOT_MATCH":
+                            fc_not_match_list.append(index)
+                    else:
+                        resources_info[index].append("NA")
+            elif (
+                device_type
+            ):  # for fc instance which doesn't configure external_info_tool
+                for index, resource in enumerate(resources_info):
+                    resource.append([])
+                    if (
+                        peripheral_info
+                    ):  # external_info_tool not specified instance defintly not match anything
                         fc_not_match_list.append(index)
-                else:
-                    resources_info[index].append("NA")
 
             resources_info = [
                 item
