@@ -67,7 +67,11 @@ class ApiSvr(AsyncRunMixin):
                     fc_farm_type = Config.managed_resources_farm_types.get(res, "")
                     template = Template(self.external_info_tool)
                     tool_command = template.substitute(
-                        {"fc_resource": fc_resource, "fc_farm_type": fc_farm_type}
+                        {
+                            "fc_resource": fc_resource,
+                            "fc_farm_type": fc_farm_type,
+                            "fc_peripheral_info": "",
+                        }
                     )
                     ret, info, _ = await self._run_cmd(tool_command)
 
