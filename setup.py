@@ -131,6 +131,7 @@ elif PKG == "fc-client":
             "etcd3-fc",
             "tenacity",
             "aiohttp",
+            "psutil",
             "protobuf==3.20.3",
         ],
     )

@@ -10,6 +10,7 @@ import argparse
 import asyncio
 import json
 import os
+import pathlib
 import signal
 import socket
 import subprocess
@@ -21,6 +22,7 @@ from socket import gethostname
 
 import aiohttp
 import prettytable
+import psutil
 import requests
 import yaml
 
@@ -30,6 +32,8 @@ from fc_common.version import get_runtime_version
 
 
 class Client:
+    daemon_pid_file = "/tmp/fc/fc_client_daemon.pid"
+
     @staticmethod
     def mode_check():
         fc_server = os.environ.get("FC_SERVER", None)
@@ -75,7 +79,16 @@ class Client:
 
         check_etcd_cfg()
 
-        if not os.path.exists("/tmp/fc/fc_client_daemon.pid"):
+        if os.path.exists(Client.daemon_pid_file):
+            pid_file = pathlib.Path(Client.daemon_pid_file)
+            pid_file = pid_file.resolve()
+
+            pid = int(pid_file.read_text(encoding="utf-8").rstrip())
+
+            if not psutil.pid_exists(pid):
+                os.remove(Client.daemon_pid_file)
+
+        if not os.path.exists(Client.daemon_pid_file):
             client_daemon = os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
                 "..",
