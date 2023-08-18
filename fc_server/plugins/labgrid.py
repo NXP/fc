@@ -70,15 +70,18 @@ class Plugin(FCPlugin, Labgrid):
                 if (
                     v["filters"]["main"] == f"name={resource}"
                     and v["owner"] == "fc/fc"
-                    and v["state"] in ("acquired", "waiting")
-                    and v["prio"] == "100.0"
+                    and v["prio"] == 100.0
                 ):
-                    # do nothing if system reservation already there
-                    system_reservation_found = True
-                    break
+                    if v["state"] == "acquired":
+                        # do nothing if system reservation already there
+                        self.logger.info("- %s system reservation exist", resource)
+                        system_reservation_found = True
+                    else:
+                        await self.labgrid_cancel_reservation(v["token"])
 
         if not system_reservation_found:
             # add system reservation for bare lock which previously not in FC control
+            # or system reservation expired
             _, output, _ = await self.labgrid_create_reservation(
                 resource, priority=100, shell=True
             )
@@ -91,12 +94,14 @@ class Plugin(FCPlugin, Labgrid):
             if ret != 0:
                 # either this resource directly be locked before FC take control,
                 # or fall into schedule gap when FC restart
-                # driver.accept_resource(resource, self)
                 if reservation:
                     await self.labgrid_cancel_reservation(reservation)
                 asyncio.create_task(
                     self.__labgrid_system_reservation(driver, resource, 0)
                 )
+                self.logger.info("- %s system reservation scheduled", resource)
+            else:
+                self.logger.info("- %s system reservation ready", resource)
 
         # set correct resource status
         owner = await self.labgrid_get_place_owner(resource)
