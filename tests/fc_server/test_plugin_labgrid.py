@@ -134,13 +134,13 @@ class TestPluginLabgrid:
             MagicMock(),
         )
 
-        async def mocker_labgrid_fc_reservation():
+        async def mocker_labgrid_system_reservation():
             pass
 
-        mocker_labgrid_fc_reservation = mocker.patch(
-            "fc_server.plugins.labgrid.Plugin._Plugin__labgrid_fc_reservation",
-            return_value=mocker_labgrid_fc_reservation(),
+        mocker_labgrid_system_reservation = mocker.patch(
+            "fc_server.plugins.labgrid.Plugin._Plugin__labgrid_system_reservation",
+            return_value=mocker_labgrid_system_reservation(),
         )
 
         await plugin.schedule(coordinator)
-        mocker_labgrid_fc_reservation.assert_called()
+        mocker_labgrid_system_reservation.assert_called()
