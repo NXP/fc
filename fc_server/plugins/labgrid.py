@@ -63,7 +63,6 @@ class Plugin(FCPlugin, Labgrid):
         Let FC take over by inject special reservation
         """
         system_reservation_found = False
-        lazy_init_resource = True
 
         reservations = await self.labgrid_get_reservations()
         if reservations:
@@ -75,22 +74,20 @@ class Plugin(FCPlugin, Labgrid):
 
         if not system_reservation_found:
             # add system reservation for bare lock which previously not in FC control
-            await self.labgrid_create_reservation(resource, priority=100, shell=True)
+            _, output, _ = await self.labgrid_create_reservation(resource, priority=100, shell=True)
+            token_string = output.split("export LG_TOKEN=")
+            reservation = None
+            if len(token_string) == 2:
+                reservation = token_string[1]
+
             ret, _, _ = await self.labgrid_acquire_place(resource)
-            if ret == 0:
-                lazy_init_resource = False
-            else:
+            if ret != 0:
                 # either this resource directly be locked before FC take control,
                 # or fall into schedule gap when FC restart
-                driver.accept_resource(resource, self)
+                # driver.accept_resource(resource, self)
+                if reservation:
+                    await self.labgrid_cancel_reservation(reservation)
                 asyncio.create_task(self.__labgrid_fc_reservation(driver, resource, 0))
-
-        # verify init effect, except the resource which belongs to lazy init
-        if not lazy_init_resource:
-            owner = await self.labgrid_get_place_owner(resource)
-            if owner != "fc/fc":
-                self.logger.info("- init %s failure", resource)
-                self.managed_resources.remove(resource)
 
     async def force_kick_off(self, resource):
         """
