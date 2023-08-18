@@ -67,7 +67,7 @@ class Plugin(FCPlugin, Labgrid):
         reservations = await self.labgrid_get_reservations()
         if reservations:
             for _, v in reservations.items():  # pylint: disable=invalid-name
-                if v["filters"]["main"] == f"name={resource}" and v["owner"] == "fc/fc" and v["state"] in ("acquired", "waiting"):
+                if v["filters"]["main"] == f"name={resource}" and v["owner"] == "fc/fc" and v["state"] in ("acquired", "waiting") and v["prio"] == "100.0":
                     # do nothing if system reservation already there
                     system_reservation_found = True
                     break
