@@ -89,6 +89,11 @@ class Plugin(FCPlugin, Labgrid):
                     await self.labgrid_cancel_reservation(reservation)
                 asyncio.create_task(self.__labgrid_fc_reservation(driver, resource, 0))
 
+        # set correct resource status
+        owner = await self.labgrid_get_place_owner(resource)
+        if owner != "fc/fc":
+            driver.accept_resource(resource, self)
+
     async def force_kick_off(self, resource):
         """
         Allow coordinator to seize labgrid resource
