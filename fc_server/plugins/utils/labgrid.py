@@ -39,16 +39,18 @@ class Labgrid(AsyncRunMixin):
         return reservations
 
     async def labgrid_create_reservation(
-        self, place, priority=None, wait=False, timeout=None
+        self, place, priority=None, wait=False, shell=False, timeout=None
     ):
         cmd = f"labgrid-client reserve name={place}"
         if timeout:
             cmd = f"timeout {timeout} " + cmd
+        if shell:
+            cmd += " --shell"
         if wait:
             cmd += " --wait"
         if priority:
             cmd += f" --prio {priority}"
-        await self._run_cmd(cmd)
+        return await self._run_cmd(cmd)
 
     async def labgrid_cancel_reservation(self, reservation, quiet=False):
         cmd = f"labgrid-client cancel-reservation {reservation}"
@@ -58,7 +60,7 @@ class Labgrid(AsyncRunMixin):
 
     async def labgrid_acquire_place(self, place):
         cmd = f"labgrid-client -p {place} acquire"
-        await self._run_cmd(cmd)
+        return await self._run_cmd(cmd)
 
     async def labgrid_release_place(self, place, force=False, quiet=False):
         cmd = f"labgrid-client -p {place} release"
