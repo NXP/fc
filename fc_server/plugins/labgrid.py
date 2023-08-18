@@ -46,9 +46,10 @@ class Plugin(FCPlugin, Labgrid):
         await self.labgrid_create_reservation(resource, priority=-100)
         self.logger.info("* [done] inject guard reservation for %s", resource)
 
-    async def __labgrid_fc_reservation(self, driver, resource):
+    async def __labgrid_fc_reservation(self, driver, resource, schedule_gap=10):
         # let labgrid coordinator has chance to schedule
-        await asyncio.sleep(10)
+        if schedule_gap > 0:
+            await asyncio.sleep(schedule_gap)
 
         self.logger.info("* [start] inject fc reservation for %s", resource)
         await self.labgrid_create_reservation(resource, priority=100, wait=True)
@@ -57,27 +58,39 @@ class Plugin(FCPlugin, Labgrid):
 
         await driver.return_resource(resource)
 
-    async def __labgrid_init(self, resource):
+    async def __labgrid_init(self, driver, resource):
         """
         Let FC take over by inject special reservation
         """
+        system_reservation_found = False
+        lazy_init_resource = True
+
         reservations = await self.labgrid_get_reservations()
         if reservations:
             for _, v in reservations.items():  # pylint: disable=invalid-name
-                if v["filters"]["main"] == f"name={resource}":
-                    await self.labgrid_cancel_reservation(v["token"])
+                if v["filters"]["main"] == f"name={resource}" and v["owner"] == "fc/fc" and v["state"] in ("acquired", "waiting"):
+                    # do nothing if system reservation already there
+                    system_reservation_found = True
+                    break
 
-        await self.labgrid_release_place(resource, force=True)
-        await self.labgrid_create_reservation(
-            resource, priority=100, wait=True, timeout=20
-        )
-        await self.labgrid_acquire_place(resource)
+        if not system_reservation_found:
+            # add system reservation for bare lock which previously not in FC control
+            await self.labgrid_create_reservation(resource, priority=100, shell=True)
+            ret, _, _ = await self.labgrid_acquire_place(resource)
+            if ret == 0:
+                lazy_init_resource = False
+            else:
+                # either this resource directly be locked before FC take control,
+                # or fall into schedule gap when FC restart
+                driver.accept_resource(resource, self)
+                asyncio.create_task(self.__labgrid_fc_reservation(driver, resource, 0))
 
-        # verify init effect
-        owner = await self.labgrid_get_place_owner(resource)
-        if owner != "fc/fc":
-            self.logger.info("- init %s failure", resource)
-            self.managed_resources.remove(resource)
+        # verify init effect, except the resource which belongs to lazy init
+        if not lazy_init_resource:
+            owner = await self.labgrid_get_place_owner(resource)
+            if owner != "fc/fc":
+                self.logger.info("- init %s failure", resource)
+                self.managed_resources.remove(resource)
 
     async def force_kick_off(self, resource):
         """
@@ -205,4 +218,4 @@ class Plugin(FCPlugin, Labgrid):
         ]
         candidated_init_resources = self.managed_resources.copy()
 
-        return [self.__labgrid_init(resource) for resource in candidated_init_resources]
+        return [self.__labgrid_init(driver, resource) for resource in candidated_init_resources]
