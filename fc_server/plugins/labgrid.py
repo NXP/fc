@@ -67,14 +67,21 @@ class Plugin(FCPlugin, Labgrid):
         reservations = await self.labgrid_get_reservations()
         if reservations:
             for _, v in reservations.items():  # pylint: disable=invalid-name
-                if v["filters"]["main"] == f"name={resource}" and v["owner"] == "fc/fc" and v["state"] in ("acquired", "waiting") and v["prio"] == "100.0":
+                if (
+                    v["filters"]["main"] == f"name={resource}"
+                    and v["owner"] == "fc/fc"
+                    and v["state"] in ("acquired", "waiting")
+                    and v["prio"] == "100.0"
+                ):
                     # do nothing if system reservation already there
                     system_reservation_found = True
                     break
 
         if not system_reservation_found:
             # add system reservation for bare lock which previously not in FC control
-            _, output, _ = await self.labgrid_create_reservation(resource, priority=100, shell=True)
+            _, output, _ = await self.labgrid_create_reservation(
+                resource, priority=100, shell=True
+            )
             token_string = output.split("export LG_TOKEN=")
             reservation = None
             if len(token_string) == 2:
@@ -87,7 +94,9 @@ class Plugin(FCPlugin, Labgrid):
                 # driver.accept_resource(resource, self)
                 if reservation:
                     await self.labgrid_cancel_reservation(reservation)
-                asyncio.create_task(self.__labgrid_system_reservation(driver, resource, 0))
+                asyncio.create_task(
+                    self.__labgrid_system_reservation(driver, resource, 0)
+                )
 
         # set correct resource status
         owner = await self.labgrid_get_place_owner(resource)
@@ -220,4 +229,7 @@ class Plugin(FCPlugin, Labgrid):
         ]
         candidated_init_resources = self.managed_resources.copy()
 
-        return [self.__labgrid_init(driver, resource) for resource in candidated_init_resources]
+        return [
+            self.__labgrid_init(driver, resource)
+            for resource in candidated_init_resources
+        ]
