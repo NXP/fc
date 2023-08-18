@@ -46,7 +46,7 @@ class Plugin(FCPlugin, Labgrid):
         await self.labgrid_create_reservation(resource, priority=-100)
         self.logger.info("* [done] inject guard reservation for %s", resource)
 
-    async def __labgrid_fc_reservation(self, driver, resource, schedule_gap=10):
+    async def __labgrid_system_reservation(self, driver, resource, schedule_gap=10):
         # let labgrid coordinator has chance to schedule
         if schedule_gap > 0:
             await asyncio.sleep(schedule_gap)
@@ -87,7 +87,7 @@ class Plugin(FCPlugin, Labgrid):
                 # driver.accept_resource(resource, self)
                 if reservation:
                     await self.labgrid_cancel_reservation(reservation)
-                asyncio.create_task(self.__labgrid_fc_reservation(driver, resource, 0))
+                asyncio.create_task(self.__labgrid_system_reservation(driver, resource, 0))
 
         # set correct resource status
         owner = await self.labgrid_get_place_owner(resource)
@@ -148,7 +148,7 @@ class Plugin(FCPlugin, Labgrid):
 
             # inject a high priority system reservation to let FC lock the device
             # after normal user finish using the device
-            asyncio.create_task(self.__labgrid_fc_reservation(driver, resource))
+            asyncio.create_task(self.__labgrid_system_reservation(driver, resource))
 
         # query labgrid reservations
         managed_resources_tokens = {}
