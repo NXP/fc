@@ -46,11 +46,7 @@ class Plugin(FCPlugin, Labgrid):
         await self.labgrid_create_reservation(resource, priority=-100)
         self.logger.info("* [done] inject guard reservation for %s", resource)
 
-    async def __labgrid_system_reservation(self, driver, resource, schedule_gap=10):
-        # let labgrid coordinator has chance to schedule
-        if schedule_gap > 0:
-            await asyncio.sleep(schedule_gap)
-
+    async def __labgrid_system_reservation(self, driver, resource):
         self.logger.info("* [start] inject fc reservation for %s", resource)
         await self.labgrid_create_reservation(resource, priority=100, wait=True)
         await self.labgrid_acquire_place(resource)
@@ -97,7 +93,7 @@ class Plugin(FCPlugin, Labgrid):
                 if reservation:
                     await self.labgrid_cancel_reservation(reservation)
                 asyncio.create_task(
-                    self.__labgrid_system_reservation(driver, resource, 0)
+                    self.__labgrid_system_reservation(driver, resource)
                 )
                 self.logger.info("- %s system reservation scheduled", resource)
             else:
