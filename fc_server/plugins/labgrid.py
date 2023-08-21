@@ -173,6 +173,12 @@ class Plugin(FCPlugin, Labgrid):
                 if v["owner"] == "fc/fc" and v["state"] in ("acquired", "allocated"):
                     managed_resources_tokens[resource] = v["token"]
 
+                # free outdated guard reservations to prevent block due to user does quick release
+                if v["owner"] == "fc/fc" and v["state"] == "allocated" and v["prio"] == -100.0:
+                    self.logger.warning("Free outdated guard reservation for %s", resource)
+                    await self.__labgrid_guard_reservation(resource)
+                    await self.labgrid_cancel_reservation(v["token"])
+
             resource_list = []
             for _, v in reservations.items():  # pylint: disable=invalid-name
                 resource = v["filters"]["main"][5:]
