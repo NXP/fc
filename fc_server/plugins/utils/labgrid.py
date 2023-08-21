@@ -50,7 +50,16 @@ class Labgrid(AsyncRunMixin):
             cmd += " --wait"
         if priority:
             cmd += f" --prio {priority}"
-        return await self._run_cmd(cmd)
+        ret_cmd = await self._run_cmd(cmd)
+
+        if shell and ret_cmd[0] == 0:
+            token_string = ret_cmd[1].split("export LG_TOKEN=")
+            reservation = None
+            if len(token_string) == 2:
+                reservation = token_string[1]
+            return ret_cmd, reservation
+
+        return ret_cmd
 
     async def labgrid_cancel_reservation(self, reservation, quiet=False):
         cmd = f"labgrid-client cancel-reservation {reservation}"

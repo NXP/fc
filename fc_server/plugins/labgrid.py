@@ -78,13 +78,9 @@ class Plugin(FCPlugin, Labgrid):
         if not system_reservation_found:
             # add system reservation for bare lock which previously not in FC control
             # or system reservation expired
-            _, output, _ = await self.labgrid_create_reservation(
+            _, reservation = await self.labgrid_create_reservation(
                 resource, priority=100, shell=True
             )
-            token_string = output.split("export LG_TOKEN=")
-            reservation = None
-            if len(token_string) == 2:
-                reservation = token_string[1]
 
             ret, _, _ = await self.labgrid_acquire_place(resource)
             if ret != 0:
