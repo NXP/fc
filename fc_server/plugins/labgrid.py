@@ -92,9 +92,7 @@ class Plugin(FCPlugin, Labgrid):
                 # or fall into schedule gap when FC restart
                 if reservation:
                     await self.labgrid_cancel_reservation(reservation)
-                asyncio.create_task(
-                    self.__labgrid_system_reservation(driver, resource)
-                )
+                asyncio.create_task(self.__labgrid_system_reservation(driver, resource))
                 self.logger.info("- %s system reservation scheduled", resource)
             else:
                 self.logger.info("- %s system reservation ready", resource)
@@ -141,9 +139,9 @@ class Plugin(FCPlugin, Labgrid):
         """
 
         async def switch_from_fc_to_labgrid(resource):
-            # there is at most 10 seconds gap there if normal user release its acquired device
-            # to avoid empty reservation during this period
-            # inject a low priority system reservation
+            # if user release quickly, there possible be a window period during user release and
+            # system reservation, to avoid this low probablity issue,
+            # inject a low priority reservation to protect it
             await self.__labgrid_guard_reservation(resource)
 
             reservation = managed_resources_tokens.get(resource, None)
@@ -170,8 +168,14 @@ class Plugin(FCPlugin, Labgrid):
                     managed_resources_tokens[resource] = v["token"]
 
                 # free outdated guard reservations to prevent block due to user does quick release
-                if v["owner"] == "fc/fc" and v["state"] == "allocated" and v["prio"] == -100.0:
-                    self.logger.warning("Free outdated guard reservation for %s", resource)
+                if (
+                    v["owner"] == "fc/fc"
+                    and v["state"] == "allocated"
+                    and v["prio"] == -100.0
+                ):
+                    self.logger.warning(
+                        "Free outdated guard reservation for %s", resource
+                    )
                     await self.__labgrid_guard_reservation(resource)
                     await self.labgrid_cancel_reservation(v["token"])
 
