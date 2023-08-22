@@ -33,6 +33,7 @@ from fc_common.version import get_runtime_version
 
 class Client:
     daemon_pid_file = "/tmp/fc/fc_client_daemon.pid"
+    etcd_url = None
 
     @staticmethod
     def mode_check():
@@ -72,8 +73,8 @@ class Client:
 
         # cluster mode
         def check_etcd_cfg():
-            etcd_url = Config.load_cfg().get("etcd")
-            if not etcd_url:
+            Client.etcd_url = Config.load_cfg().get("etcd")
+            if not Client.etcd_url:
                 print("Fatal: please init cluster settings for your client first")
                 sys.exit(1)
 
@@ -149,6 +150,7 @@ class Client:
             print(f"export LG_CROSSBAR={metadata['lg']}")
         else:
             metadata = Client.fetch_metadata("all")
+            print(f"ETCD: {Client.etcd_url}")
 
             print(f"Totally {len(metadata)} instances as follows:")
             for instance_name, data in metadata.items():
