@@ -170,22 +170,16 @@ class Client:
 
         metadata = Client.fetch_metadata("all")
 
+        instances = list(metadata.keys())
         tasks = [
             get_booking(instance_meta["fc"]) for instance_meta in metadata.values()
         ]
         loop = asyncio.get_event_loop()
         booking_data = loop.run_until_complete(asyncio.gather(*tasks))
-        format_booking_data = []
-        for index, data in enumerate(booking_data):
-            if index == 0:
-                format_booking_data.append(data)
-            else:
-                data_seg = data.split("\n", 1)
-                if len(data_seg) > 1:
-                    format_booking_data.append(data_seg[1])
 
-        booking = "\n".join(format_booking_data)
-        print(booking)
+        for index, data in enumerate(booking_data):
+            print(f"- Instance {instances[index]}:")
+            print(data)
 
     @staticmethod
     def status(args):
