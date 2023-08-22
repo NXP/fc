@@ -141,7 +141,7 @@ class Plugin(FCPlugin, Labgrid):
         if reservations:
             for _, v in reservations.items():  # pylint: disable=invalid-name
                 resource = v["filters"]["main"][5:]
-                if v["owner"] == "fc/fc" and v["state"] == "acquired":
+                if v["owner"] == "fc/fc" and v["state"] in ("acquired", "allocated"):
                     managed_resources_tokens[resource] = v["token"]
 
             resource_list = []
