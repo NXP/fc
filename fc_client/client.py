@@ -153,8 +153,8 @@ class Client:
             print(f"Totally {len(metadata)} instances as follows:")
             for instance_name, data in metadata.items():
                 print(f"{instance_name}:")
-                print(f"  - FC_SERVER: {data['fc']}")
-                print(f"  - LG_CROSSBAR: {data['lg']}")
+                print(f"  - export FC_SERVER={data['fc']}")
+                print(f"  - export LG_CROSSBAR={data['lg']}")
 
     @staticmethod
     def booking(_):
