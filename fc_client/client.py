@@ -237,7 +237,7 @@ class Client:
     @staticmethod
     @which(
         "labgrid-client",
-        "Use 'pip3 install labgrid-client' to install labgrid software please.",
+        "Use 'pip3 install labgrid' or other customized way to install labgrid software please.",
     )
     def lock(args):
         resource = args.resource
@@ -289,7 +289,7 @@ class Client:
     @staticmethod
     @which(
         "labgrid-client",
-        "Use 'pip3 install labgrid-client' to install labgrid software please.",
+        "Use 'pip3 install labgrid' or other customized way to install labgrid software please.",
     )
     def unlock(args):
         resource = args.resource
