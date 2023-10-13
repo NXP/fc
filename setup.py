@@ -126,7 +126,6 @@ elif PKG == "fc-client":
         },
         install_requires=[
             "prettytable>=2.2.1",
-            "labgrid==23.0.1",
             "python-daemon",
             "etcd3-fc",
             "tenacity",
@@ -134,6 +133,9 @@ elif PKG == "fc-client":
             "psutil",
             "protobuf==3.20.3",
         ],
+        extras_require={
+            "labgrid": ["labgrid==23.0.1"],
+        },
     )
 elif PKG == "fc-client-docker":
     setup(
