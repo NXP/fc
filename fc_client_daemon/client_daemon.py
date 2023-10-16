@@ -152,19 +152,25 @@ class ClientDaemon:
 
             msg = json.loads(data.decode("utf-8"))
             with self.lock:
-                if msg["require"] == "all":
-                    self.logger.info(self.instance_data)
-                    client_socket.send(json.dumps(self.instance_data).encode("utf-8"))
-                else:
-                    try:
-                        logger.info(self.device_data[msg["require"]])
-                        return_data = self.instance_data[
-                            self.device_data[msg["require"]]
-                        ]
-                    except Exception as ipc_exec:  # pylint: disable=broad-except
-                        return_data = {}
-                        self.logger.info(ipc_exec)
-                    client_socket.send(json.dumps(return_data).encode("utf-8"))
+                if msg["msg_type"] == "require_info":
+                    if msg["para"] == "all":
+                        self.logger.info(self.instance_data)
+                        client_socket.send(
+                            json.dumps(self.instance_data).encode("utf-8")
+                        )
+                    else:
+                        try:
+                            logger.info(self.device_data[msg["para"]])
+                            return_data = self.instance_data[
+                                self.device_data[msg["para"]]
+                            ]
+                        except Exception as ipc_exec:  # pylint: disable=broad-except
+                            return_data = {}
+                            self.logger.info(ipc_exec)
+                        client_socket.send(json.dumps(return_data).encode("utf-8"))
+                elif msg["msg_type"] == "daemon_stop":
+                    client_socket.send("ok")
+                    os.kill(os.getpid(), signal.SIGINT)
 
 
 if __name__ == "__main__":

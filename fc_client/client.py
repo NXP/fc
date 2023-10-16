@@ -61,25 +61,7 @@ class Client:
         os.execvp("labgrid-client", ["labgrid-client", "-p", args.resource] + extras)
 
     @staticmethod
-    def fetch_metadata(filters):
-        # single mode
-        if Client.mode == "single":
-            fc_server = os.environ.get("FC_SERVER", None)
-            lg_crossbar = os.environ.get("LG_CROSSBAR", None)
-
-            if filters == "all":
-                return {"default": {"fc": fc_server, "lg": lg_crossbar}}
-            return {"fc": fc_server, "lg": lg_crossbar}
-
-        # cluster mode
-        def check_etcd_cfg():
-            Client.etcd_url = Config.load_cfg().get("etcd")
-            if not Client.etcd_url:
-                print("Fatal: please init cluster settings for your client first")
-                sys.exit(1)
-
-        check_etcd_cfg()
-
+    def communicate_with_daemon(msg_type, para=None):
         if os.path.exists(Client.daemon_pid_file):
             pid_file = pathlib.Path(Client.daemon_pid_file)
             pid_file = pid_file.resolve()
@@ -114,13 +96,37 @@ class Client:
                 time.sleep(0.1)
                 retries += 1
 
-        # {"require": "all"} or {"require": "imx8mm-evk-sh99"}
-        msg = {"require": filters}
+        msg = {"msg_type": msg_type, "para": para}
         json_msg = json.dumps(msg)
 
         sock.send(json_msg.encode("utf-8"))
         data = sock.recv(1024)
         sock.close()
+
+        return data
+
+    @staticmethod
+    def fetch_metadata(filters):
+        # single mode
+        if Client.mode == "single":
+            fc_server = os.environ.get("FC_SERVER", None)
+            lg_crossbar = os.environ.get("LG_CROSSBAR", None)
+
+            if filters == "all":
+                return {"default": {"fc": fc_server, "lg": lg_crossbar}}
+            return {"fc": fc_server, "lg": lg_crossbar}
+
+        # cluster mode
+        def check_etcd_cfg():
+            Client.etcd_url = Config.load_cfg().get("etcd")
+            if not Client.etcd_url:
+                print("Fatal: please init cluster settings for your client first")
+                sys.exit(1)
+
+        check_etcd_cfg()
+
+        data = Client.communicate_with_daemon("require_info", filters)
+
         return json.loads(data.decode("utf-8"))
 
     @staticmethod
@@ -130,14 +136,16 @@ class Client:
             sys.exit(1)
 
         if len(extras) == 1:
-            print(f"{extras[0]} removed")
             cfg = Config.load_cfg()
             cfg.pop(extras[0], "")
             Config.save_cfg(cfg)
+            Client.communicate_with_daemon("daemon_stop")
+            print(f"{extras[0]} removed")
         elif len(extras) == 2:
             cfg = Config.load_cfg()
             cfg.update({extras[0]: extras[1]})
             Config.save_cfg(cfg)
+            Client.communicate_with_daemon("daemon_stop")
             print("Init done")
         else:
             print("Wrong command")
