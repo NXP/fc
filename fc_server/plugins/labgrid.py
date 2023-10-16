@@ -230,9 +230,7 @@ class Plugin(FCPlugin, Labgrid):
 
         places = await self.labgrid_get_places()
         self.managed_resources = [
-            place.strip()
-            for place in places.splitlines()
-            if place.strip() in driver.managed_resources
+            place for place in places if place in driver.managed_resources
         ]
         candidated_init_resources = self.managed_resources.copy()
 

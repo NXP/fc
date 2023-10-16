@@ -23,9 +23,10 @@ class Labgrid(AsyncRunMixin):
         self.logger = logging.getLogger("fc_server")
 
     async def labgrid_get_places(self):
-        cmd = "labgrid-client p"
+        cmd = "labgrid-client -v p"
         _, places, _ = await self._run_cmd(cmd)
-        return places
+        place_line = places.splitlines()
+        return [line.split("'")[1] for line in place_line if line.find("Place") >= 0]
 
     async def labgrid_get_reservations(self):
         cmd = "labgrid-client reservations"
