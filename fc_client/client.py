@@ -125,7 +125,7 @@ class Client:
 
     @staticmethod
     def init(extras):
-        if extras[0] not in ["etcd"]:
+        if len(extras) == 0 or extras[0] not in ["etcd"]:
             print("Candidated init para: etcd")
             sys.exit(1)
 
