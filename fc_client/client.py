@@ -58,7 +58,18 @@ class Client:
         metadata = Client.fetch_metadata(args.resource)
         os.environ["LG_CROSSBAR"] = metadata["lg"]
 
-        os.execvp("labgrid-client", ["labgrid-client", "-p", args.resource] + extras)
+        cmd = " ".join(extras)
+        try:
+            import fc_plugins # import-outside-toplevel
+
+            cmd = fc_plugins.get_rule(metadata["lg"], cmd)
+        except ImportError:
+            pass
+
+        os.environ["LG_PLACE"] = args.resource
+        os.execvp(
+            "labgrid-client", ["labgrid-client", "-p", args.resource] + cmd.split(" ")
+        )
 
     @staticmethod
     def communicate_with_daemon(msg_type, para=None):
