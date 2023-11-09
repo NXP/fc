@@ -78,7 +78,7 @@ class Client:
                 "fc_client_daemon",
                 "client_daemon.py",
             )
-            subprocess.run(["python3", client_daemon], check=True)
+            subprocess.run([sys.executable, client_daemon], check=True)
 
         server_address = "\0/tmp/fc/fc_client_daemon.sock"
         retries = 0
