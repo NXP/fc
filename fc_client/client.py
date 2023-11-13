@@ -60,7 +60,7 @@ class Client:
 
         cmd = " ".join(extras)
         try:
-            import fc_plugins # import-outside-toplevel
+            import fc_plugins  # import-outside-toplevel
 
             cmd = fc_plugins.get_rule(metadata["lg"], cmd)
         except ImportError:
