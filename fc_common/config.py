@@ -24,10 +24,15 @@ class Config:
 
     @staticmethod
     def load_cfg():
-        cfg_path = os.path.expanduser(
-            os.environ.get("FC_CLIENT_CFG_PATH", "~/.fc/client_cfg")
-        )
-        cfg_yaml = os.path.join(cfg_path, "fc.yaml")
+        system_cfg_path = "/opt/.fc/client_cfg"
+        system_cfg_yaml = os.path.join(system_cfg_path, "fc.yaml")
+        if os.path.exists(system_cfg_yaml):
+            cfg_yaml = system_cfg_yaml
+        else:
+            cfg_path = os.path.expanduser(
+                os.environ.get("FC_CLIENT_CFG_PATH", "~/.fc/client_cfg")
+            )
+            cfg_yaml = os.path.join(cfg_path, "fc.yaml")
 
         try:
             with open(cfg_yaml, encoding="utf-8") as f_cfg:
