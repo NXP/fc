@@ -43,7 +43,10 @@ class InstallCommand(install):
         if os.path.exists(pid_file):
             pid_path = pathlib.Path(pid_file)
             pid = int(pid_path.read_text(encoding="utf-8").rstrip())
-            os.kill(pid, signal.SIGINT)
+            try:
+                os.kill(pid, signal.SIGINT)
+            except:
+                pass
 
 
 def get_project_name():
