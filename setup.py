@@ -45,7 +45,7 @@ class InstallCommand(install):
             pid = int(pid_path.read_text(encoding="utf-8").rstrip())
             try:
                 os.kill(pid, signal.SIGINT)
-            except:
+            except:  # pylint: disable=bare-except
                 pass
 
 
