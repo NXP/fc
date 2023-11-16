@@ -1,0 +1,8 @@
+Package:                     fc.git
+Version:                     0.6.9
+Outgoing License:            MIT
+License File:                LICENSE
+Type of Content:             source
+Description and comments:    Open source coordinator service among different embedded test frameworks
+Release Location:            https://github.com/nxp/fc -b main
+Origin:                      NXP (MIT)
