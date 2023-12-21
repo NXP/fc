@@ -17,6 +17,7 @@ import subprocess
 import sys
 import time
 import urllib.parse
+from contextlib import suppress
 from getpass import getuser
 from socket import gethostname
 
@@ -180,10 +181,12 @@ class Client:
     @staticmethod
     def booking(_):
         async def get_booking(fc_server):
+            output = ""
             url = f"{fc_server}/booking"
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url) as response:
-                    output = await response.text()
+            with suppress(OSError):
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(url) as response:
+                        output = await response.text()
 
             return output
 
