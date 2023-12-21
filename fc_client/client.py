@@ -59,18 +59,25 @@ class Client:
         metadata = Client.fetch_metadata(args.resource)
         os.environ["LG_CROSSBAR"] = metadata["lg"]
 
-        cmd = " ".join(extras)
-        try:
-            import fc_plugins  # pylint: disable=import-outside-toplevel
+        # FIXME: temp fix for bootstrap command  # pylint: disable=fixme
+        if extras == ["ssh"]:
+            cmd = " ".join(extras)
+            try:
+                import fc_plugins  # pylint: disable=import-outside-toplevel
 
-            cmd = fc_plugins.get_rule(metadata["lg"], cmd)
-        except ImportError:
-            pass
+                cmd = fc_plugins.get_rule(metadata["lg"], cmd)
+            except ImportError:
+                pass
 
-        os.environ["LG_PLACE"] = args.resource
-        os.execvp(
-            "labgrid-client", ["labgrid-client", "-p", args.resource] + cmd.split(" ")
-        )
+            os.environ["LG_PLACE"] = args.resource
+            os.execvp(
+                "labgrid-client",
+                ["labgrid-client", "-p", args.resource] + cmd.split(" "),
+            )
+        else:
+            os.execvp(
+                "labgrid-client", ["labgrid-client", "-p", args.resource] + extras
+            )
 
     @staticmethod
     def communicate_with_daemon(msg_type, para=None):
