@@ -28,6 +28,23 @@ class Labgrid(AsyncRunMixin):
         place_line = places.splitlines()
         return [line.split("'")[1] for line in place_line if line.find("Place") >= 0]
 
+    async def labgrid_get_comments(self):
+        comments = {}
+        cmd = "labgrid-client -v p"
+        _, places, _ = await self._run_cmd(cmd)
+        place_line = places.splitlines()
+        try_to_parse_comment = False
+        for line in place_line:
+            if line.find("Place") >= 0:
+                place = line.split("'")[1]
+                try_to_parse_comment = True
+                continue
+            if try_to_parse_comment:
+                if line.find("comment: ") > 0:
+                    comments[place] = line.split("comment: ")[1]
+                try_to_parse_comment = False
+        return comments
+
     async def labgrid_get_reservations(self):
         cmd = "labgrid-client reservations"
         _, reservations_text, _ = await self._run_cmd(cmd)

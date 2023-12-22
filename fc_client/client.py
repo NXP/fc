@@ -211,14 +211,18 @@ class Client:
             print(data)
 
     @staticmethod
-    def status(args):
+    def status(args):  # pylint: disable=too-many-statements
         async def get_status(fc_server):
             specified_resource = args.resource
             specified_farm_type = args.farm_type
             specified_device_type = args.device_type
             specified_peripheral_info = args.peripheral_info
 
-            url = f"{fc_server}/resource"
+            if args.verbose == 0:
+                url = f"{fc_server}/resource"
+            else:
+                url = f"{fc_server}/verbose_resource"
+
             if specified_resource:
                 url += f"/{specified_resource}"
 
@@ -241,7 +245,12 @@ class Client:
                 except Exception:  # pylint: disable=broad-except
                     return []
 
-            return json.loads(output)
+            try:
+                ret = json.loads(output)
+            except Exception:  # pylint: disable=broad-except
+                return []
+
+            return ret
 
         metadata = Client.fetch_metadata("all")
 
@@ -251,15 +260,34 @@ class Client:
         resources = sum(resource_data, [])
 
         table = prettytable.PrettyTable()
-        table_width = 4
-        for resource in resources:
-            table.add_row(resource)
-            table_width = len(resource)
 
-        if table_width == 5:
-            table.field_names = ["Resource", "Farm", "Status", "Note", "Info"]
+        if args.verbose == 0:
+            table_width = 4
+            for resource in resources:
+                table.add_row(resource)
+                table_width = len(resource)
+
+            if table_width == 5:
+                table.field_names = ["Resource", "Farm", "Status", "Note", "Info"]
+            else:
+                table.field_names = ["Resource", "Farm", "Status", "Note"]
         else:
-            table.field_names = ["Resource", "Farm", "Status", "Note"]
+            table_width = 5
+            for resource in resources:
+                table.add_row(resource)
+                table_width = len(resource)
+
+            if table_width == 6:
+                table.field_names = [
+                    "Resource",
+                    "Farm",
+                    "Status",
+                    "Note",
+                    "Comment",
+                    "Info",
+                ]
+            else:
+                table.field_names = ["Resource", "Farm", "Status", "Note", "Comment"]
 
         print(table.get_string(sortby="Resource"))
 
@@ -387,6 +415,7 @@ def main():
     parser.add_argument("-f", "--farm-type", type=str, help="farm type")
     parser.add_argument("-d", "--device-type", type=str, help="device type")
     parser.add_argument("-i", "--peripheral-info", type=str, help="peripheral info")
+    parser.add_argument("-v", "--verbose", action="count", default=0)
 
     args, extras = parser.parse_known_args()
 

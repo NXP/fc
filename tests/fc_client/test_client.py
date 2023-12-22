@@ -15,6 +15,7 @@ class TestClient:
             resource = "imx8mm-evk-sh11"
             farm_type = "bsp"
             device_type = "imx8mm-evk"
+            verbose = 0
 
         mocker.patch(
             "fc_client.client.Client.fetch_metadata",
@@ -26,10 +27,10 @@ class TestClient:
         output = capsys.readouterr()[0]
 
         assert output in (
-            """+----------+------+--------+---------+
-| Resource | Farm | Status | Comment |
-+----------+------+--------+---------+
-+----------+------+--------+---------+
+            """+----------+------+--------+------+
+| Resource | Farm | Status | Note |
++----------+------+--------+------+
++----------+------+--------+------+
 """,
         )
 

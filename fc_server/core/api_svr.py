@@ -33,14 +33,23 @@ class ApiSvr(AsyncRunMixin):
             return Config.frameworks_config[status]["friendly_status"]
         return status
 
-    async def resource_status(
-        self, request
+    async def resource_status(self, request):
+        return await self.fetch_resource_status(request)
+
+    async def verbose_resource_status(self, request):
+        return await self.fetch_resource_status(request, True)
+
+    async def fetch_resource_status(
+        self, request, verbose=False
     ):  # pylint: disable=too-many-branches, too-many-locals, too-many-statements
         # get all labgrid managed resources
         labgrid_managed_resources = []
+        comments = {}
         for framework in self.context.framework_instances:
             if framework.__module__.split(".")[-1] == "labgrid":
                 labgrid_managed_resources = framework.managed_resources
+                if verbose:
+                    comments = await framework.labgrid_get_comments()
                 break
 
         res = request.match_info.get("res", "")
@@ -60,6 +69,12 @@ class ApiSvr(AsyncRunMixin):
                     item.append("non-debuggable")
                 else:
                     item.append("")
+
+                if verbose:
+                    try:
+                        item.append(comments[res])
+                    except KeyError:
+                        item.append("")
 
                 if self.external_info_tool:
                     # fetch external resource info if needed
@@ -117,6 +132,12 @@ class ApiSvr(AsyncRunMixin):
                     item.append("non-debuggable")
                 else:
                     item.append("")
+
+                if verbose:
+                    try:
+                        item.append(comments[resource])
+                    except KeyError:
+                        item.append("")
 
                 resources_info.append(item)
 
@@ -202,6 +223,10 @@ class ApiSvr(AsyncRunMixin):
         app.add_routes([web.get("/booking", self.booking)])
         app.add_routes([web.get("/resource", self.resource_status)])
         app.add_routes([web.get("/resource/{res}", self.resource_status)])
+        app.add_routes([web.get("/verbose_resource", self.verbose_resource_status)])
+        app.add_routes(
+            [web.get("/verbose_resource/{res}", self.verbose_resource_status)]
+        )
 
         app_runner = web.AppRunner(app)
         await app_runner.setup()
