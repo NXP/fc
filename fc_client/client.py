@@ -17,7 +17,6 @@ import subprocess
 import sys
 import time
 import urllib.parse
-from contextlib import suppress
 from getpass import getuser
 from socket import gethostname
 
@@ -188,12 +187,15 @@ class Client:
     @staticmethod
     def booking(_):
         async def get_booking(fc_server):
-            output = ""
             url = f"{fc_server}/booking"
-            with suppress(OSError):
-                async with aiohttp.ClientSession() as session:
+            timeout = aiohttp.ClientTimeout(total=15)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                try:
                     async with session.get(url) as response:
                         output = await response.text()
+                except Exception as exc:  # pylint: disable=broad-except
+                    print(f"Warning: {fc_server} skipped due to {type(exc)}")
+                    return ""
 
             return output
 
@@ -238,11 +240,13 @@ class Client:
             if query_string:
                 url += f"?{query_string}"
 
-            async with aiohttp.ClientSession() as session:
+            timeout = aiohttp.ClientTimeout(total=15)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
                 try:
                     async with session.get(url) as response:
                         output = await response.text()
-                except Exception:  # pylint: disable=broad-except
+                except Exception as exc:  # pylint: disable=broad-except
+                    print(f"Warning: {fc_server} skipped due to {type(exc)}")
                     return []
 
             try:
