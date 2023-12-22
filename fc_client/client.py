@@ -257,9 +257,9 @@ class Client:
             table_width = len(resource)
 
         if table_width == 5:
-            table.field_names = ["Resource", "Farm", "Status", "Comment", "Info"]
+            table.field_names = ["Resource", "Farm", "Status", "Note", "Info"]
         else:
-            table.field_names = ["Resource", "Farm", "Status", "Comment"]
+            table.field_names = ["Resource", "Farm", "Status", "Note"]
 
         print(table.get_string(sortby="Resource"))
 
