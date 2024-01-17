@@ -319,6 +319,15 @@ class Client:
         os.environ["LG_CROSSBAR"] = metadata["lg"]
 
         if resource:
+            print(f"Check if {resource} is free")
+            cmd = f"labgrid-client -p {resource} show | grep acquired:"
+            ret, place_info_text = subprocess.getstatusoutput(cmd)
+            if ret == 0:
+                acquired = place_info_text.split()[1]
+                if acquired not in ["fc/fc", "None"]:
+                    sys.exit(
+                        f"error: place {resource} is already acquired by {acquired}"
+                    )
             print(f"Try to acquire resource {resource}...")
             with subprocess.Popen(
                 ["labgrid-client", "reserve", "--wait", f"name={resource}"],
