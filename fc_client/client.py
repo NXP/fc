@@ -188,7 +188,7 @@ class Client:
     def booking(_):
         async def get_booking(fc_server):
             url = f"{fc_server}/booking"
-            timeout = aiohttp.ClientTimeout(total=15)
+            timeout = aiohttp.ClientTimeout(total=5)
             async with aiohttp.ClientSession(timeout=timeout) as session:
                 try:
                     async with session.get(url) as response:
@@ -240,7 +240,7 @@ class Client:
             if query_string:
                 url += f"?{query_string}"
 
-            timeout = aiohttp.ClientTimeout(total=15)
+            timeout = aiohttp.ClientTimeout(total=5)
             async with aiohttp.ClientSession(timeout=timeout) as session:
                 try:
                     async with session.get(url) as response:
