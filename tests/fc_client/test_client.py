@@ -43,6 +43,13 @@ class TestClient:
                 self.text = '[["imx8mm-evk-sh11", "bsp", "idle", ""]]'
 
         mocker.patch(
+            "subprocess.getstatusoutput",
+            return_value=(
+                0,
+                "  acquired: fc/fc",
+            ),
+        )
+        mocker.patch(
             "fc_client.client.Client.fetch_metadata",
             return_value={"fc": "foo", "lg": "bar"},
         )
