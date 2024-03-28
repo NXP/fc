@@ -135,6 +135,8 @@ elif PKG == "fc-client":
             "aiohttp",
             "psutil",
             "protobuf==3.20.3",
+            "requests",
+            "PyYAML",
         ],
         extras_require={
             "labgrid": ["labgrid==23.0.1"],
