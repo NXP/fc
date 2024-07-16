@@ -433,25 +433,7 @@ class Plugin(FCPlugin, Lava):
         """
 
         if driver.is_default_framework(self):
-            maintenance_devices = [
-                device["hostname"]
-                for device in await self.lava_get_devices()
-                if device["hostname"] in driver.managed_resources
-                and device["health"] in ("Maintenance",)
-            ]
-            recover_devices = [
-                (device, await self.__get_device_description(device))
-                for device in maintenance_devices
-                if (await self.__get_device_description(device)).startswith(
-                    self.device_description_prefix
-                )
-            ]
-            return [
-                self.lava_online_devices(
-                    device, desc=desc.split(self.device_description_prefix)[-1]
-                )
-                for device, desc in recover_devices
-            ]
+            return []
 
         return [
             self.lava_maintenance_devices(device["hostname"])

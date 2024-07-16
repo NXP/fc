@@ -167,10 +167,8 @@ class Coordinator:
                 )
 
                 if maintenance_by_fc:
-                    if disconnect_success:
-                        self.__managed_disconnect_resources.append(resource)
-                    else:
-                        # delay default framework connect if api call failure
+                    if not disconnect_success:
+                        # delay default framework connect if race condition
                         self.__managed_issue_disconnect_resources.append(resource)
                 return disconnect_success
 
@@ -307,6 +305,9 @@ class Coordinator:
             timeout_task.cancel()
 
         self.__set_resource_status(resource, context.__module__.split(".")[-1])
+        if Config.default_framework:
+            if context.__module__.split(".")[-1] != Config.default_framework:
+                self.__managed_disconnect_resources.append(resource)
 
     def retire_resource(self, resource):
         self.__set_resource_status(resource, "retired")
