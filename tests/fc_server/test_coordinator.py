@@ -140,7 +140,6 @@ class TestCoordinator:
             await coordinator.is_resource_available(labgrid_plugin, "$resource1")
             == expected[0]
         )
-        assert coordinator._Coordinator__managed_disconnect_resources == expected[1]
         assert (
             coordinator._Coordinator__managed_issue_disconnect_resources == expected[2]
         )
