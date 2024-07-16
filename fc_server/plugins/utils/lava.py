@@ -50,6 +50,7 @@ class Lava(AsyncRunMixin):
             )
             if desc:
                 cmd += f" --description '{desc}'"
+            self.logger.info(cmd)
             cmd_list.append(cmd)
         results = await asyncio.gather(*[self._run_cmd(cmd) for cmd in cmd_list])
 
@@ -66,6 +67,7 @@ class Lava(AsyncRunMixin):
             )
             if desc:
                 cmd += f" --description '{desc}'"
+            self.logger.info(cmd)
             cmd_list.append(cmd)
         results = await asyncio.gather(*[self._run_cmd(cmd) for cmd in cmd_list])
 
