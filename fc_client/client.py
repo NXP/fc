@@ -313,6 +313,10 @@ class Client:
             url = f"{fc_server}/resource/{resource}"
             output = requests.get(url)
             output_data = json.loads(output.text)
+
+            if len(output_data) == 0:
+                sys.exit("Fatal: invalid resource")
+
             if output_data[0][3] != "":
                 print("Fatal: non-debuggable resource")
                 sys.exit(1)
