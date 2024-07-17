@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2023 NXP
+# Copyright 2024 NXP
 #
 # SPDX-License-Identifier: MIT
 
@@ -24,8 +24,14 @@ class TestConfig:
         }
         assert Config.registered_frameworks == ["lava", "labgrid"]
         assert Config.frameworks_config == {
-            "lava": {"default": True, "identities": "$lava_identity", "priority": 1},
+            "lava": {
+                "default": True,
+                "friendly_status": "occupied(lava)",
+                "identities": "$lava_identity",
+                "priority": 1,
+            },
             "labgrid": {
+                "friendly_status": "occupied(labgrid)",
                 "lg_crossbar": "ws://$labgrid_crossbar_ip:20408/ws",
                 "priority": 2,
                 "seize": False,
