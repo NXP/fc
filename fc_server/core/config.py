@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2021-2023 NXP
+# Copyright 2021-2024 NXP
 #
 # SPDX-License-Identifier: MIT
 
@@ -19,7 +19,7 @@ class Config:
     logger = logging.getLogger("fc_server")
 
     @staticmethod
-    def parse(fc_path):  # pylint: disable=too-many-statements
+    def parse(fc_path):  # pylint: disable=too-many-statements, too-many-branches
         config_path = os.environ.get(
             "FC_SERVER_CFG_PATH", os.path.join(fc_path, "config")
         )
@@ -108,3 +108,12 @@ class Config:
         Config.default_framework = (
             None if default_framework_number == 0 else default_framework_strategies[0]
         )
+
+        for framework in Config.registered_frameworks:
+            friendly_status = Config.frameworks_config[framework].get(
+                "friendly_status", None
+            )
+            if not friendly_status:
+                Config.frameworks_config[framework][
+                    "friendly_status"
+                ] = f"occupied({framework})"
