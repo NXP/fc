@@ -263,7 +263,7 @@ class Client:
         resource_data = loop.run_until_complete(asyncio.gather(*tasks))
         resources = sum(resource_data, [])
 
-        table = prettytable.PrettyTable()
+        table = prettytable.PrettyTable(align="l")
 
         if args.verbose == 0:
             table_width = 4
@@ -293,6 +293,7 @@ class Client:
             else:
                 table.field_names = ["Resource", "Farm", "Status", "Note", "Comment"]
 
+        table.max_width = 80
         print(table.get_string(sortby="Resource"))
 
     @staticmethod
