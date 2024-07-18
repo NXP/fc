@@ -117,3 +117,6 @@ class Config:
                 Config.frameworks_config[framework][
                     "friendly_status"
                 ] = f"occupied({framework})"
+        Config.frameworks_config.setdefault("fc", {}).setdefault(
+            "friendly_status", "idle"
+        )

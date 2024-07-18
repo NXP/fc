@@ -36,6 +36,9 @@ class TestConfig:
                 "priority": 2,
                 "seize": False,
             },
+            "fc": {
+                "friendly_status": "idle",
+            },
         }
         assert Config.priority_scheduler
         assert Config.api_server == {"port": 8600, "publish_port": 8600}
