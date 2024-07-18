@@ -108,9 +108,7 @@ class Client:
                 break
             except socket.error as msg:
                 if retries == max_retries:
-                    print("Fatal: fc_client_daemon not available")
-                    print(msg)
-                    sys.exit(1)
+                    sys.exit(f"Fatal: fc_client_daemon not available ({msg})")
                 time.sleep(0.1)
                 retries += 1
 
@@ -138,8 +136,7 @@ class Client:
         def check_etcd_cfg():
             Client.etcd_url = Config.load_cfg().get("etcd")
             if not Client.etcd_url:
-                print("Fatal: please init cluster settings for your client first")
-                sys.exit(1)
+                sys.exit("Fatal: please init cluster settings for your client first")
 
         check_etcd_cfg()
 
@@ -150,8 +147,7 @@ class Client:
     @staticmethod
     def init(extras):
         if len(extras) == 0 or extras[0] not in ["etcd"]:
-            print("Candidated init para: etcd")
-            sys.exit(1)
+            sys.exit("Candidated init para: etcd")
 
         if len(extras) == 1:
             cfg = Config.load_cfg()
@@ -307,8 +303,7 @@ class Client:
 
         fc_server = metadata.get("fc", None)
         if not fc_server:
-            print("Fatal: invalid resource")
-            sys.exit(1)
+            sys.exit("Fatal: invalid resource")
         else:
             url = f"{fc_server}/resource/{resource}"
             output = requests.get(url)
@@ -318,8 +313,7 @@ class Client:
                 sys.exit("Fatal: invalid resource")
 
             if output_data[0][3] != "":
-                print("Fatal: non-debuggable resource")
-                sys.exit(1)
+                sys.exit("Fatal: non-debuggable resource")
 
         os.environ["LG_CROSSBAR"] = metadata["lg"]
 
@@ -358,8 +352,7 @@ class Client:
                             stderr=subprocess.STDOUT,
                         )
         else:
-            print("No resource specified.")
-            sys.exit(1)
+            sys.exit("No resource specified.")
 
     @staticmethod
     @which(
@@ -406,15 +399,12 @@ class Client:
                                     ["labgrid-client", "-p", resource, "unlock"]
                                 )
                             else:
-                                print("Fatal: the resource not owned by you.")
-                                sys.exit(1)
+                                sys.exit("Fatal: the resource not owned by you.")
                             break
             else:
-                print(f"Fatal: {place_info_text}")
-                sys.exit(1)
+                sys.exit(f"Fatal: {place_info_text}")
         else:
-            print("No resource specified.")
-            sys.exit(1)
+            sys.exit("No resource specified.")
 
 
 def main():
