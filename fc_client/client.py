@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright 2021-2023 NXP
+# Copyright 2021-2024 NXP
 #
 # SPDX-License-Identifier: MIT
 
@@ -141,8 +141,12 @@ class Client:
         check_etcd_cfg()
 
         data = Client.communicate_with_daemon("require_info", filters)
+        json_data = json.loads(data.decode("utf-8"))
 
-        return json.loads(data.decode("utf-8"))
+        if filters != "all" and not json_data:
+            sys.exit("Fatal: invalid resource")
+
+        return json_data
 
     @staticmethod
     def init(extras):
